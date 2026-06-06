@@ -1,0 +1,1483 @@
+# Práctica de Redes: Subneteo VLSM en GNS3 con Enrutamiento Estático
+
+## 1. Nombre de la práctica
+
+**Diseño e implementación de una red IPv4 usando VLSM y enrutamiento estático en GNS3 con routers Cisco C3725 o C7200.**
+
+---
+
+## 2. Objetivo general
+
+Diseñar una red IPv4 utilizando **VLSM** para optimizar el uso de direcciones IP, representarla en **GNS3** mediante routers Cisco **C3725** o **C7200**, configurar las interfaces de red y aplicar **enrutamiento estático** para permitir comunicación entre todas las subredes.
+
+---
+
+## 3. Objetivos específicos
+
+Al finalizar esta práctica, el estudiante será capaz de:
+
+1. Identificar los requerimientos de hosts para cada red.
+2. Ordenar las redes de mayor a menor cantidad de hosts.
+3. Calcular subredes usando VLSM.
+4. Asignar direcciones IP a routers y PCs.
+5. Representar la topología en GNS3.
+6. Configurar interfaces FastEthernet en routers Cisco.
+7. Configurar direcciones IP en PCs usando VPCS.
+8. Crear rutas estáticas en cada router.
+9. Verificar conectividad usando `ping` y `trace`.
+10. Diagnosticar errores comunes de conectividad.
+
+---
+
+## 4. Conocimientos previos necesarios
+
+Antes de realizar esta práctica, se recomienda que el estudiante conozca:
+
+- Concepto de dirección IP.
+- Máscara de subred.
+- Dirección de red.
+- Dirección de broadcast.
+- Rango de hosts válidos.
+- Comando `ping`.
+- Comando `show ip interface brief`.
+- Comando `show ip route`.
+- Concepto básico de gateway.
+- Funcionamiento básico de GNS3.
+
+---
+
+## 5. Herramientas necesarias
+
+Para desarrollar esta práctica se necesita:
+
+- GNS3 instalado.
+- Imagen IOS de Cisco C3725 o C7200.
+- VPCS para simular computadoras.
+- Consola de los routers funcionando correctamente.
+- Conocimientos básicos de conexión de dispositivos en GNS3.
+
+---
+
+## 6. Conceptos teóricos básicos
+
+### 6.1 ¿Qué es subneteo?
+
+El subneteo consiste en dividir una red grande en redes más pequeñas. Esto permite organizar mejor una infraestructura de red y evitar desperdicio de direcciones IP.
+
+Por ejemplo, si tenemos la red:
+
+```text
+192.168.10.0/24
+```
+
+Esta red tiene 256 direcciones en total, desde:
+
+```text
+192.168.10.0 hasta 192.168.10.255
+```
+
+Sin embargo, no siempre se necesita usar toda la red completa para un solo departamento. Por eso se puede dividir en varias subredes.
+
+---
+
+### 6.2 ¿Qué es VLSM?
+
+**VLSM** significa **Variable Length Subnet Mask**, o en español, **Máscara de Subred de Longitud Variable**.
+
+Con VLSM se pueden crear subredes con diferentes tamaños dentro de una misma red principal.
+
+Por ejemplo:
+
+- Una red puede necesitar 50 hosts.
+- Otra red puede necesitar 25 hosts.
+- Otra red puede necesitar 12 hosts.
+- Un enlace entre routers puede necesitar solo 2 hosts.
+
+Si se usara la misma máscara para todas las redes, se desperdiciarían muchas direcciones IP. Con VLSM se asigna a cada red únicamente el tamaño que necesita.
+
+---
+
+### 6.3 ¿Qué es enrutamiento estático?
+
+El enrutamiento estático consiste en configurar manualmente las rutas que debe conocer cada router.
+
+Un router solo conoce directamente las redes que están conectadas a sus interfaces. Para llegar a redes lejanas, necesita que se le indique manualmente el camino.
+
+El comando general para una ruta estática en Cisco es:
+
+```text
+ip route RED_DESTINO MASCARA_DESTINO SIGUIENTE_SALTO
+```
+
+Ejemplo:
+
+```text
+ip route 192.168.10.64 255.255.255.224 192.168.10.114
+```
+
+Esto significa:
+
+> Para llegar a la red `192.168.10.64/27`, envía los paquetes al siguiente router con IP `192.168.10.114`.
+
+---
+
+## 7. Escenario de la práctica
+
+Una empresa necesita conectar tres departamentos mediante routers. Cada departamento tendrá su propia red LAN y los routers estarán conectados entre sí usando enlaces punto a punto.
+
+La red base asignada es:
+
+```text
+192.168.10.0/24
+```
+
+Se deben crear subredes para las siguientes necesidades:
+
+| Red | Cantidad de hosts requeridos |
+|---|---:|
+| Administración | 50 hosts |
+| Ventas | 25 hosts |
+| Soporte Técnico | 12 hosts |
+| Enlace R1-R2 | 2 hosts |
+| Enlace R2-R3 | 2 hosts |
+
+---
+
+## 8. Topología lógica
+
+La red estará formada por tres routers y tres computadoras.
+
+```text
+PC1 ---- R1 ---- R2 ---- R3 ---- PC3
+          |       |
+          |       |
+      LAN ADM   LAN VENTAS
+```
+
+Una forma más clara de verlo es:
+
+```text
+LAN Administración        LAN Ventas             LAN Soporte Técnico
+      PC1                    PC2                        PC3
+       |                      |                          |
+       |                      |                          |
+      R1 ------------------- R2 ------------------------ R3
+          Enlace R1-R2              Enlace R2-R3
+```
+
+---
+
+## 9. Dispositivos a usar en GNS3
+
+Para esta práctica se recomienda usar:
+
+| Cantidad | Dispositivo |
+|---:|---|
+| 3 | Router Cisco C3725 o C7200 |
+| 3 | VPCS |
+| 5 | Cables Ethernet |
+
+Los routers serán nombrados así:
+
+| Router | Función |
+|---|---|
+| R1 | Router de Administración |
+| R2 | Router central y Ventas |
+| R3 | Router de Soporte Técnico |
+
+Las PCs serán nombradas así:
+
+| PC | Red |
+|---|---|
+| PC1 | Administración |
+| PC2 | Ventas |
+| PC3 | Soporte Técnico |
+
+---
+
+## 10. Cálculo VLSM paso a paso
+
+### 10.1 Paso 1: ordenar las redes de mayor a menor
+
+En VLSM siempre se recomienda iniciar por la red que necesita más hosts.
+
+| Orden | Red | Hosts requeridos |
+|---:|---|---:|
+| 1 | Administración | 50 |
+| 2 | Ventas | 25 |
+| 3 | Soporte Técnico | 12 |
+| 4 | Enlace R1-R2 | 2 |
+| 5 | Enlace R2-R3 | 2 |
+
+---
+
+### 10.2 Paso 2: calcular la máscara para Administración
+
+Administración necesita 50 hosts.
+
+Se busca una potencia de 2 que permita cubrir esos hosts.
+
+```text
+2^5 = 32 direcciones
+32 - 2 = 30 hosts útiles
+```
+
+No alcanza para 50 hosts.
+
+Entonces se prueba con 6 bits para hosts:
+
+```text
+2^6 = 64 direcciones
+64 - 2 = 62 hosts útiles
+```
+
+Sí alcanza.
+
+Por tanto, Administración necesita una subred con 6 bits para hosts.
+
+Como IPv4 tiene 32 bits:
+
+```text
+32 - 6 = 26
+```
+
+La máscara será:
+
+```text
+/26
+```
+
+En decimal:
+
+```text
+255.255.255.192
+```
+
+---
+
+### 10.3 Paso 3: calcular la máscara para Ventas
+
+Ventas necesita 25 hosts.
+
+```text
+2^4 = 16 direcciones
+16 - 2 = 14 hosts útiles
+```
+
+No alcanza.
+
+```text
+2^5 = 32 direcciones
+32 - 2 = 30 hosts útiles
+```
+
+Sí alcanza.
+
+Entonces se necesitan 5 bits para hosts.
+
+```text
+32 - 5 = 27
+```
+
+La máscara será:
+
+```text
+/27
+```
+
+En decimal:
+
+```text
+255.255.255.224
+```
+
+---
+
+### 10.4 Paso 4: calcular la máscara para Soporte Técnico
+
+Soporte Técnico necesita 12 hosts.
+
+```text
+2^3 = 8 direcciones
+8 - 2 = 6 hosts útiles
+```
+
+No alcanza.
+
+```text
+2^4 = 16 direcciones
+16 - 2 = 14 hosts útiles
+```
+
+Sí alcanza.
+
+Entonces se necesitan 4 bits para hosts.
+
+```text
+32 - 4 = 28
+```
+
+La máscara será:
+
+```text
+/28
+```
+
+En decimal:
+
+```text
+255.255.255.240
+```
+
+---
+
+### 10.5 Paso 5: calcular la máscara para los enlaces entre routers
+
+Cada enlace entre routers necesita solamente 2 direcciones útiles.
+
+Una para cada extremo del enlace.
+
+```text
+2^2 = 4 direcciones
+4 - 2 = 2 hosts útiles
+```
+
+Entonces se necesitan 2 bits para hosts.
+
+```text
+32 - 2 = 30
+```
+
+La máscara será:
+
+```text
+/30
+```
+
+En decimal:
+
+```text
+255.255.255.252
+```
+
+---
+
+## 11. Tabla final de subredes VLSM
+
+Partiendo desde la red base:
+
+```text
+192.168.10.0/24
+```
+
+La asignación queda de la siguiente manera:
+
+| Red | Dirección de red | Máscara CIDR | Máscara decimal | Primer host | Último host | Broadcast |
+|---|---|---|---|---|---|---|
+| Administración | 192.168.10.0 | /26 | 255.255.255.192 | 192.168.10.1 | 192.168.10.62 | 192.168.10.63 |
+| Ventas | 192.168.10.64 | /27 | 255.255.255.224 | 192.168.10.65 | 192.168.10.94 | 192.168.10.95 |
+| Soporte Técnico | 192.168.10.96 | /28 | 255.255.255.240 | 192.168.10.97 | 192.168.10.110 | 192.168.10.111 |
+| Enlace R1-R2 | 192.168.10.112 | /30 | 255.255.255.252 | 192.168.10.113 | 192.168.10.114 | 192.168.10.115 |
+| Enlace R2-R3 | 192.168.10.116 | /30 | 255.255.255.252 | 192.168.10.117 | 192.168.10.118 | 192.168.10.119 |
+
+---
+
+## 12. Explicación de los saltos de red
+
+Cada máscara tiene un tamaño diferente.
+
+### Para /26
+
+La máscara es:
+
+```text
+255.255.255.192
+```
+
+El salto se calcula así:
+
+```text
+256 - 192 = 64
+```
+
+Por eso la primera subred inicia en:
+
+```text
+192.168.10.0
+```
+
+Y la siguiente disponible inicia en:
+
+```text
+192.168.10.64
+```
+
+---
+
+### Para /27
+
+La máscara es:
+
+```text
+255.255.255.224
+```
+
+El salto es:
+
+```text
+256 - 224 = 32
+```
+
+Como la red anterior terminó en `192.168.10.63`, la siguiente red inicia en:
+
+```text
+192.168.10.64
+```
+
+Y ocupa hasta:
+
+```text
+192.168.10.95
+```
+
+---
+
+### Para /28
+
+La máscara es:
+
+```text
+255.255.255.240
+```
+
+El salto es:
+
+```text
+256 - 240 = 16
+```
+
+Por eso Soporte Técnico queda en:
+
+```text
+192.168.10.96/28
+```
+
+Ocupando desde `192.168.10.96` hasta `192.168.10.111`.
+
+---
+
+### Para /30
+
+La máscara es:
+
+```text
+255.255.255.252
+```
+
+El salto es:
+
+```text
+256 - 252 = 4
+```
+
+Cada enlace punto a punto ocupa únicamente 4 direcciones:
+
+```text
+Red
+Host 1
+Host 2
+Broadcast
+```
+
+Ejemplo:
+
+```text
+192.168.10.112  -> Dirección de red
+192.168.10.113  -> IP para R1
+192.168.10.114  -> IP para R2
+192.168.10.115  -> Broadcast
+```
+
+---
+
+## 13. Asignación de direcciones IP
+
+### 13.1 LAN Administración
+
+| Dispositivo | Interfaz | Dirección IP | Máscara | Gateway |
+|---|---|---|---|---|
+| R1 | FastEthernet0/0 | 192.168.10.1 | 255.255.255.192 | No aplica |
+| PC1 | NIC | 192.168.10.2 | 255.255.255.192 | 192.168.10.1 |
+
+---
+
+### 13.2 LAN Ventas
+
+| Dispositivo | Interfaz | Dirección IP | Máscara | Gateway |
+|---|---|---|---|---|
+| R2 | FastEthernet0/0 | 192.168.10.65 | 255.255.255.224 | No aplica |
+| PC2 | NIC | 192.168.10.66 | 255.255.255.224 | 192.168.10.65 |
+
+---
+
+### 13.3 LAN Soporte Técnico
+
+| Dispositivo | Interfaz | Dirección IP | Máscara | Gateway |
+|---|---|---|---|---|
+| R3 | FastEthernet0/0 | 192.168.10.97 | 255.255.255.240 | No aplica |
+| PC3 | NIC | 192.168.10.98 | 255.255.255.240 | 192.168.10.97 |
+
+---
+
+### 13.4 Enlace entre R1 y R2
+
+| Dispositivo | Interfaz | Dirección IP | Máscara |
+|---|---|---|---|
+| R1 | FastEthernet0/1 | 192.168.10.113 | 255.255.255.252 |
+| R2 | FastEthernet0/1 | 192.168.10.114 | 255.255.255.252 |
+
+---
+
+### 13.5 Enlace entre R2 y R3
+
+| Dispositivo | Interfaz | Dirección IP | Máscara |
+|---|---|---|---|
+| R2 | FastEthernet1/0 | 192.168.10.117 | 255.255.255.252 |
+| R3 | FastEthernet0/1 | 192.168.10.118 | 255.255.255.252 |
+
+---
+
+## 14. Construcción de la topología en GNS3
+
+### 14.1 Crear el proyecto
+
+1. Abrir GNS3.
+2. Crear un nuevo proyecto.
+3. Colocar un nombre, por ejemplo:
+
+```text
+Practica_VLSM_Estatico
+```
+
+---
+
+### 14.2 Agregar routers
+
+Agregar tres routers Cisco C3725 o C7200.
+
+Renombrarlos así:
+
+```text
+R1
+R2
+R3
+```
+
+---
+
+### 14.3 Agregar PCs
+
+Agregar tres VPCS.
+
+Renombrarlas así:
+
+```text
+PC1
+PC2
+PC3
+```
+
+---
+
+### 14.4 Conectar los dispositivos
+
+Realizar las siguientes conexiones:
+
+| Dispositivo origen | Interfaz origen | Dispositivo destino | Interfaz destino |
+|---|---|---|---|
+| PC1 | Ethernet0 | R1 | FastEthernet0/0 |
+| R1 | FastEthernet0/1 | R2 | FastEthernet0/1 |
+| PC2 | Ethernet0 | R2 | FastEthernet0/0 |
+| R2 | FastEthernet1/0 | R3 | FastEthernet0/1 |
+| PC3 | Ethernet0 | R3 | FastEthernet0/0 |
+
+> Nota: Las interfaces pueden cambiar según el router o módulo utilizado en GNS3. Si una interfaz no aparece, revisar los módulos disponibles del router.
+
+---
+
+## 15. Verificación inicial de interfaces
+
+Antes de configurar, abrir la consola de cada router y ejecutar:
+
+```text
+show ip interface brief
+```
+
+Este comando muestra las interfaces disponibles.
+
+Ejemplo de salida esperada:
+
+```text
+Interface              IP-Address      OK? Method Status                Protocol
+FastEthernet0/0        unassigned      YES unset  administratively down down
+FastEthernet0/1        unassigned      YES unset  administratively down down
+FastEthernet1/0        unassigned      YES unset  administratively down down
+```
+
+Si las interfaces aparecen como `administratively down`, es normal. Más adelante se activarán con el comando:
+
+```text
+no shutdown
+```
+
+---
+
+# 16. Configuración de las PCs
+
+## 16.1 Configurar PC1
+
+Abrir la consola de PC1 y escribir:
+
+```text
+ip 192.168.10.2 255.255.255.192 192.168.10.1
+save
+```
+
+Explicación:
+
+```text
+192.168.10.2       -> Dirección IP de PC1
+255.255.255.192    -> Máscara de la red Administración
+192.168.10.1       -> Gateway, que es la IP del router R1
+```
+
+Verificar con:
+
+```text
+show ip
+```
+
+---
+
+## 16.2 Configurar PC2
+
+Abrir la consola de PC2 y escribir:
+
+```text
+ip 192.168.10.66 255.255.255.224 192.168.10.65
+save
+```
+
+Explicación:
+
+```text
+192.168.10.66      -> Dirección IP de PC2
+255.255.255.224    -> Máscara de la red Ventas
+192.168.10.65      -> Gateway, que es la IP del router R2
+```
+
+---
+
+## 16.3 Configurar PC3
+
+Abrir la consola de PC3 y escribir:
+
+```text
+ip 192.168.10.98 255.255.255.240 192.168.10.97
+save
+```
+
+Explicación:
+
+```text
+192.168.10.98      -> Dirección IP de PC3
+255.255.255.240    -> Máscara de la red Soporte Técnico
+192.168.10.97      -> Gateway, que es la IP del router R3
+```
+
+---
+
+# 17. Configuración del router R1
+
+## 17.1 Entrar al modo privilegiado
+
+```text
+enable
+```
+
+## 17.2 Entrar al modo de configuración global
+
+```text
+configure terminal
+```
+
+## 17.3 Cambiar el nombre del router
+
+```text
+hostname R1
+```
+
+---
+
+## 17.4 Configurar la interfaz hacia PC1
+
+```text
+interface fastEthernet0/0
+ip address 192.168.10.1 255.255.255.192
+no shutdown
+exit
+```
+
+Explicación:
+
+```text
+interface fastEthernet0/0
+```
+
+Permite entrar a configurar la interfaz que conecta R1 con PC1.
+
+```text
+ip address 192.168.10.1 255.255.255.192
+```
+
+Asigna la IP del gateway de la red Administración.
+
+```text
+no shutdown
+```
+
+Activa la interfaz.
+
+---
+
+## 17.5 Configurar la interfaz hacia R2
+
+```text
+interface fastEthernet0/1
+ip address 192.168.10.113 255.255.255.252
+no shutdown
+exit
+```
+
+Esta interfaz conecta R1 con R2.
+
+---
+
+## 17.6 Configurar rutas estáticas en R1
+
+R1 conoce directamente estas redes:
+
+```text
+192.168.10.0/26      Red Administración
+192.168.10.112/30    Enlace R1-R2
+```
+
+Pero R1 no conoce:
+
+```text
+192.168.10.64/27     Red Ventas
+192.168.10.96/28     Red Soporte Técnico
+192.168.10.116/30    Enlace R2-R3
+```
+
+Por eso se configuran rutas estáticas hacia R2:
+
+```text
+ip route 192.168.10.64 255.255.255.224 192.168.10.114
+ip route 192.168.10.96 255.255.255.240 192.168.10.114
+ip route 192.168.10.116 255.255.255.252 192.168.10.114
+```
+
+Explicación:
+
+```text
+192.168.10.114
+```
+
+Es la IP de R2 en el enlace entre R1 y R2. Por lo tanto, R1 enviará hacia R2 el tráfico destinado a esas redes.
+
+---
+
+## 17.7 Guardar configuración en R1
+
+```text
+end
+write memory
+```
+
+También se puede usar:
+
+```text
+copy running-config startup-config
+```
+
+---
+
+# 18. Configuración del router R2
+
+## 18.1 Entrar a configuración
+
+```text
+enable
+configure terminal
+hostname R2
+```
+
+---
+
+## 18.2 Configurar la interfaz hacia PC2
+
+```text
+interface fastEthernet0/0
+ip address 192.168.10.65 255.255.255.224
+no shutdown
+exit
+```
+
+Esta interfaz será el gateway de PC2.
+
+---
+
+## 18.3 Configurar la interfaz hacia R1
+
+```text
+interface fastEthernet0/1
+ip address 192.168.10.114 255.255.255.252
+no shutdown
+exit
+```
+
+Esta interfaz conecta R2 con R1.
+
+---
+
+## 18.4 Configurar la interfaz hacia R3
+
+```text
+interface fastEthernet1/0
+ip address 192.168.10.117 255.255.255.252
+no shutdown
+exit
+```
+
+Esta interfaz conecta R2 con R3.
+
+---
+
+## 18.5 Configurar rutas estáticas en R2
+
+R2 conoce directamente:
+
+```text
+192.168.10.64/27     Red Ventas
+192.168.10.112/30    Enlace R1-R2
+192.168.10.116/30    Enlace R2-R3
+```
+
+Pero R2 no conoce directamente:
+
+```text
+192.168.10.0/26      Red Administración
+192.168.10.96/28     Red Soporte Técnico
+```
+
+Entonces se configuran estas rutas:
+
+```text
+ip route 192.168.10.0 255.255.255.192 192.168.10.113
+ip route 192.168.10.96 255.255.255.240 192.168.10.118
+```
+
+Explicación:
+
+- Para llegar a Administración, R2 debe enviar el tráfico hacia R1.
+- Para llegar a Soporte Técnico, R2 debe enviar el tráfico hacia R3.
+
+---
+
+## 18.6 Guardar configuración en R2
+
+```text
+end
+write memory
+```
+
+---
+
+# 19. Configuración del router R3
+
+## 19.1 Entrar a configuración
+
+```text
+enable
+configure terminal
+hostname R3
+```
+
+---
+
+## 19.2 Configurar la interfaz hacia PC3
+
+```text
+interface fastEthernet0/0
+ip address 192.168.10.97 255.255.255.240
+no shutdown
+exit
+```
+
+Esta interfaz será el gateway de PC3.
+
+---
+
+## 19.3 Configurar la interfaz hacia R2
+
+```text
+interface fastEthernet0/1
+ip address 192.168.10.118 255.255.255.252
+no shutdown
+exit
+```
+
+Esta interfaz conecta R3 con R2.
+
+---
+
+## 19.4 Configurar rutas estáticas en R3
+
+R3 conoce directamente:
+
+```text
+192.168.10.96/28     Red Soporte Técnico
+192.168.10.116/30    Enlace R2-R3
+```
+
+Pero R3 no conoce directamente:
+
+```text
+192.168.10.0/26      Red Administración
+192.168.10.64/27     Red Ventas
+192.168.10.112/30    Enlace R1-R2
+```
+
+Entonces se configuran estas rutas:
+
+```text
+ip route 192.168.10.0 255.255.255.192 192.168.10.117
+ip route 192.168.10.64 255.255.255.224 192.168.10.117
+ip route 192.168.10.112 255.255.255.252 192.168.10.117
+```
+
+Explicación:
+
+```text
+192.168.10.117
+```
+
+Es la IP de R2 en el enlace entre R2 y R3. Por eso, R3 enviará hacia R2 el tráfico destinado a redes que no conoce directamente.
+
+---
+
+## 19.5 Guardar configuración en R3
+
+```text
+end
+write memory
+```
+
+---
+
+# 20. Configuración completa resumida
+
+## 20.1 Router R1
+
+```text
+enable
+configure terminal
+hostname R1
+
+interface fastEthernet0/0
+ip address 192.168.10.1 255.255.255.192
+no shutdown
+exit
+
+interface fastEthernet0/1
+ip address 192.168.10.113 255.255.255.252
+no shutdown
+exit
+
+ip route 192.168.10.64 255.255.255.224 192.168.10.114
+ip route 192.168.10.96 255.255.255.240 192.168.10.114
+ip route 192.168.10.116 255.255.255.252 192.168.10.114
+
+end
+write memory
+```
+
+---
+
+## 20.2 Router R2
+
+```text
+enable
+configure terminal
+hostname R2
+
+interface fastEthernet0/0
+ip address 192.168.10.65 255.255.255.224
+no shutdown
+exit
+
+interface fastEthernet0/1
+ip address 192.168.10.114 255.255.255.252
+no shutdown
+exit
+
+interface fastEthernet1/0
+ip address 192.168.10.117 255.255.255.252
+no shutdown
+exit
+
+ip route 192.168.10.0 255.255.255.192 192.168.10.113
+ip route 192.168.10.96 255.255.255.240 192.168.10.118
+
+end
+write memory
+```
+
+---
+
+## 20.3 Router R3
+
+```text
+enable
+configure terminal
+hostname R3
+
+interface fastEthernet0/0
+ip address 192.168.10.97 255.255.255.240
+no shutdown
+exit
+
+interface fastEthernet0/1
+ip address 192.168.10.118 255.255.255.252
+no shutdown
+exit
+
+ip route 192.168.10.0 255.255.255.192 192.168.10.117
+ip route 192.168.10.64 255.255.255.224 192.168.10.117
+ip route 192.168.10.112 255.255.255.252 192.168.10.117
+
+end
+write memory
+```
+
+---
+
+# 21. Verificación de interfaces
+
+En cada router ejecutar:
+
+```text
+show ip interface brief
+```
+
+## 21.1 Resultado esperado en R1
+
+```text
+Interface              IP-Address        Status      Protocol
+FastEthernet0/0         192.168.10.1      up          up
+FastEthernet0/1         192.168.10.113    up          up
+```
+
+## 21.2 Resultado esperado en R2
+
+```text
+Interface              IP-Address        Status      Protocol
+FastEthernet0/0         192.168.10.65     up          up
+FastEthernet0/1         192.168.10.114    up          up
+FastEthernet1/0         192.168.10.117    up          up
+```
+
+## 21.3 Resultado esperado en R3
+
+```text
+Interface              IP-Address        Status      Protocol
+FastEthernet0/0         192.168.10.97     up          up
+FastEthernet0/1         192.168.10.118    up          up
+```
+
+---
+
+# 22. Verificación de rutas
+
+En cada router ejecutar:
+
+```text
+show ip route
+```
+
+Las rutas conectadas aparecerán con la letra:
+
+```text
+C
+```
+
+Las rutas estáticas aparecerán con la letra:
+
+```text
+S
+```
+
+---
+
+## 22.1 Ejemplo de rutas en R1
+
+R1 debe tener rutas similares a estas:
+
+```text
+C    192.168.10.0/26 is directly connected, FastEthernet0/0
+C    192.168.10.112/30 is directly connected, FastEthernet0/1
+S    192.168.10.64/27 [1/0] via 192.168.10.114
+S    192.168.10.96/28 [1/0] via 192.168.10.114
+S    192.168.10.116/30 [1/0] via 192.168.10.114
+```
+
+---
+
+## 22.2 Ejemplo de rutas en R2
+
+```text
+C    192.168.10.64/27 is directly connected, FastEthernet0/0
+C    192.168.10.112/30 is directly connected, FastEthernet0/1
+C    192.168.10.116/30 is directly connected, FastEthernet1/0
+S    192.168.10.0/26 [1/0] via 192.168.10.113
+S    192.168.10.96/28 [1/0] via 192.168.10.118
+```
+
+---
+
+## 22.3 Ejemplo de rutas en R3
+
+```text
+C    192.168.10.96/28 is directly connected, FastEthernet0/0
+C    192.168.10.116/30 is directly connected, FastEthernet0/1
+S    192.168.10.0/26 [1/0] via 192.168.10.117
+S    192.168.10.64/27 [1/0] via 192.168.10.117
+S    192.168.10.112/30 [1/0] via 192.168.10.117
+```
+
+---
+
+# 23. Pruebas de conectividad
+
+## 23.1 Probar PC1 hacia su gateway
+
+Desde PC1:
+
+```text
+ping 192.168.10.1
+```
+
+Si responde, PC1 tiene conexión con R1.
+
+---
+
+## 23.2 Probar PC2 hacia su gateway
+
+Desde PC2:
+
+```text
+ping 192.168.10.65
+```
+
+Si responde, PC2 tiene conexión con R2.
+
+---
+
+## 23.3 Probar PC3 hacia su gateway
+
+Desde PC3:
+
+```text
+ping 192.168.10.97
+```
+
+Si responde, PC3 tiene conexión con R3.
+
+---
+
+## 23.4 Probar PC1 hacia PC2
+
+Desde PC1:
+
+```text
+ping 192.168.10.66
+```
+
+Resultado esperado:
+
+```text
+84 bytes from 192.168.10.66 icmp_seq=1 ttl=62 time=xx ms
+```
+
+---
+
+## 23.5 Probar PC1 hacia PC3
+
+Desde PC1:
+
+```text
+ping 192.168.10.98
+```
+
+Si responde, significa que el tráfico está pasando correctamente por R1, R2 y R3.
+
+---
+
+## 23.6 Probar PC3 hacia PC1
+
+Desde PC3:
+
+```text
+ping 192.168.10.2
+```
+
+Esta prueba es importante porque confirma que también existe ruta de regreso.
+
+---
+
+# 24. Prueba con trace
+
+Desde PC1 ejecutar:
+
+```text
+trace 192.168.10.98
+```
+
+Resultado esperado aproximado:
+
+```text
+trace to 192.168.10.98, 8 hops max
+1   192.168.10.1
+2   192.168.10.114
+3   192.168.10.118
+4   192.168.10.98
+```
+
+Esto muestra que el tráfico siguió este camino:
+
+```text
+PC1 -> R1 -> R2 -> R3 -> PC3
+```
+
+---
+
+# 25. Explicación del recorrido del paquete
+
+Cuando PC1 quiere comunicarse con PC3, ocurre lo siguiente:
+
+1. PC1 revisa que la IP destino `192.168.10.98` no pertenece a su misma red.
+2. PC1 envía el paquete a su gateway `192.168.10.1`.
+3. R1 recibe el paquete.
+4. R1 revisa su tabla de rutas.
+5. R1 encuentra una ruta estática hacia `192.168.10.96/28` usando el siguiente salto `192.168.10.114`.
+6. R1 envía el paquete a R2.
+7. R2 revisa su tabla de rutas.
+8. R2 encuentra que debe enviar el paquete hacia R3 por medio de `192.168.10.118`.
+9. R3 recibe el paquete.
+10. R3 detecta que la red `192.168.10.96/28` está conectada directamente.
+11. R3 entrega el paquete a PC3.
+12. PC3 responde siguiendo la ruta de regreso.
+
+---
+
+# 26. Errores comunes y solución
+
+## 26.1 Error: La interfaz aparece administratively down
+
+Síntoma:
+
+```text
+FastEthernet0/0    administratively down    down
+```
+
+Causa:
+
+La interfaz está apagada manualmente.
+
+Solución:
+
+```text
+configure terminal
+interface fastEthernet0/0
+no shutdown
+exit
+```
+
+---
+
+## 26.2 Error: La interfaz aparece up/down
+
+Síntoma:
+
+```text
+FastEthernet0/0    up    down
+```
+
+Posibles causas:
+
+- Cable mal conectado.
+- Dispositivo del otro extremo apagado.
+- Interfaz del otro extremo apagada.
+- Se usó una interfaz incorrecta.
+
+Solución:
+
+1. Revisar conexión en GNS3.
+2. Verificar que ambos dispositivos estén encendidos.
+3. Verificar `no shutdown` en ambos extremos.
+4. Revisar que se configuró la interfaz correcta.
+
+---
+
+## 26.3 Error: La PC no responde al gateway
+
+Posibles causas:
+
+- IP mal configurada en la PC.
+- Gateway incorrecto.
+- Máscara incorrecta.
+- Interfaz del router apagada.
+
+Solución:
+
+En la PC ejecutar:
+
+```text
+show ip
+```
+
+Verificar IP, máscara y gateway.
+
+Luego revisar en el router:
+
+```text
+show ip interface brief
+```
+
+---
+
+## 26.4 Error: PC1 llega a R1 pero no llega a PC3
+
+Posibles causas:
+
+- Faltan rutas estáticas.
+- La ruta estática tiene una máscara incorrecta.
+- El siguiente salto está mal configurado.
+- Falta ruta de regreso.
+
+Solución:
+
+Revisar en cada router:
+
+```text
+show ip route
+```
+
+Confirmar que todas las redes remotas aparezcan con letra `S`.
+
+---
+
+## 26.5 Error: Se configuró una IP repetida
+
+Síntoma:
+
+Puede haber pérdida de conectividad o comportamiento inestable.
+
+Solución:
+
+Revisar cuidadosamente la tabla de direccionamiento y asegurarse de que cada interfaz tenga una IP única.
+
+---
+
+# 27. Comandos de diagnóstico importantes
+
+## En routers Cisco
+
+```text
+show ip interface brief
+show ip route
+show running-config
+show startup-config
+ping DIRECCION_IP
+traceroute DIRECCION_IP
+```
+
+## En VPCS
+
+```text
+show ip
+ping DIRECCION_IP
+trace DIRECCION_IP
+save
+```
+
+---
+
+# 28. Actividad para el estudiante
+
+Realizar lo siguiente:
+
+1. Crear la topología en GNS3.
+2. Aplicar el direccionamiento IP calculado.
+3. Configurar las interfaces de los routers.
+4. Configurar las PCs.
+5. Crear las rutas estáticas.
+6. Verificar con `show ip interface brief`.
+7. Verificar con `show ip route`.
+8. Realizar pruebas de `ping` entre todas las PCs.
+9. Realizar una prueba de `trace` desde PC1 hacia PC3.
+10. Tomar captura de pantalla de:
+   - Topología en GNS3.
+   - Configuración IP de las PCs.
+   - Tabla de rutas de cada router.
+   - Pings exitosos.
+   - Trace exitoso.
+
+---
+
+# 29. Preguntas de análisis
+
+Responder después de finalizar la práctica:
+
+1. ¿Por qué se ordenan las redes de mayor a menor cantidad de hosts en VLSM?
+2. ¿Qué pasaría si se asigna una máscara incorrecta a una PC?
+3. ¿Por qué los enlaces entre routers usan máscara `/30`?
+4. ¿Qué significa la letra `C` en la tabla de rutas?
+5. ¿Qué significa la letra `S` en la tabla de rutas?
+6. ¿Por qué es importante configurar rutas de ida y rutas de regreso?
+7. ¿Qué comando permite verificar si una interfaz está activa?
+8. ¿Qué comando permite ver el camino que sigue un paquete?
+
+---
+
+# 30. Resultado esperado
+
+Al finalizar correctamente la práctica:
+
+- PC1 podrá comunicarse con PC2.
+- PC1 podrá comunicarse con PC3.
+- PC2 podrá comunicarse con PC3.
+- Los routers tendrán rutas conectadas y rutas estáticas.
+- El comando `trace` mostrará el recorrido entre routers.
+- La red funcionará usando únicamente enrutamiento estático.
+
+---
+
+# 31. Conclusión
+
+En esta práctica se aplicó el subneteo mediante VLSM para dividir la red `192.168.10.0/24` en varias subredes de diferentes tamaños. Esto permitió asignar direcciones IP de forma más eficiente según las necesidades de cada departamento y de cada enlace entre routers.
+
+Además, se implementó la topología en GNS3 utilizando routers Cisco C3725 o C7200 y PCs virtuales. Mediante la configuración de interfaces, gateways y rutas estáticas, se logró la comunicación entre redes que no estaban conectadas directamente.
+
+La práctica demuestra que el enrutamiento estático requiere planificación cuidadosa, ya que cada router debe conocer manualmente las redes remotas y también debe existir una ruta de regreso para que la comunicación sea exitosa.
