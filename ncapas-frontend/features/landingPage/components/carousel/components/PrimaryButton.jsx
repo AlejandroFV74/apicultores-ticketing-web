@@ -1,8 +1,14 @@
+import { useNavigate } from "react-router-dom";
+
 export default function PrimaryButton({
   children,
   className = "",
   ...props
 }) {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate("/eventmap");
+  }
   return (
     <button
       className={`
@@ -21,6 +27,7 @@ export default function PrimaryButton({
         active:scale-95
         ${className}
       `}
+      onClick={handleClick}
       {...props}
     >
       {children}
