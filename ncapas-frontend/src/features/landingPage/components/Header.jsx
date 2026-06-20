@@ -2,11 +2,14 @@ import Logo from "./Logo";
 import NavigationLinks from "./NavegationLinks";
 import AuthButtons from "./AuthButtons";
 import MobileMenu from "./MobileMenu";
+import { getUser, isAuthenticated } from "../../../services/auth.service";
 
 export default function Header({
   mobileMenuOpen,
   setMobileMenuOpen,
 }) {
+  const user = getUser();
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-neon-blue/20 backdrop-blur-xl glassmorphism">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -16,9 +19,19 @@ export default function Header({
           <NavigationLinks />
         </nav>
 
-        <div className="flex items-center gap-4">
-          <AuthButtons />
-
+        {
+          isAuthenticated() ? (
+            <>
+              <span className="text-lg font-bold text-neon-blue">{user.fullName}</span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-4">
+              <AuthButtons />
+              </div>
+            </>         
+          )
+        }
           <button
             onClick={() =>
               setMobileMenuOpen(!mobileMenuOpen)
@@ -62,7 +75,6 @@ export default function Header({
             )}
           </button>
         </div>
-      </div>
 
       {mobileMenuOpen && <MobileMenu />}
     </header>

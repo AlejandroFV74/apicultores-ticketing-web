@@ -6,11 +6,20 @@ export async function Login(credentials){
         body: JSON.stringify(credentials),
     })
 
-    const data = await response.json();
-
+    console.log(response);
     if(!response.ok){
-        throw new Error(data.message || "Login failed");
+        throw new Error(response.status || "Login failed");
     }
+
+    const data = await response.json();
+    
+    localStorage.setItem("token", data.token);
+    const user = {
+        userId: data.userId,
+        fullName: data.fullName,
+        email: data.email,
+    }
+    localStorage.setItem("user", JSON.stringify(user));
 
     return data;
 }
@@ -28,5 +37,23 @@ export async function Register(body){
     }
 
     return data;
+}
+
+export function getUser(){
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+}
+
+export function getToken() {
+    return localStorage.getItem("token");
+}
+
+export function isAuthenticated() {
+    return !!localStorage.getItem("token");
+}
+
+export function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 }
 
