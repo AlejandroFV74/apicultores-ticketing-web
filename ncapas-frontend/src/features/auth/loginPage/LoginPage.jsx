@@ -7,10 +7,13 @@ import AuthInput from "../components/AuthInput";
 import PasswordInput from "../components/PasswordInput";
 import AuthButton from "../components/AuthButton";
 import AuthFooterLink from "../components/AuthFooterLink";
+import { Login } from "../../../services/auth.service";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
-    usernameOrEmail: "",
+    email: "",
     password: "",
   });
 
@@ -25,19 +28,15 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    console.log("Login:", form);
-
-    // Aquí llamarías a tu API
-    // login(form);
+    Login(form).then((res) => {
+      if (res) {
+        navigate("/");
+      }
+    });
   };
 
   const handleRegisterClick = () => {
     // navigate("/register");
-  };
-
-  const handleForgotPassword = () => {
-    // navigate("/forgot-password");
   };
 
   return (
@@ -52,11 +51,11 @@ export default function LoginPage() {
           className="space-y-5"
         >
           <AuthInput
-            label="Usuario o Correo Electrónico"
-            name="usernameOrEmail"
-            value={form.usernameOrEmail}
+            label="Correo Electrónico"
+            name="email"
+            value={form.email}
             onChange={handleChange}
-            placeholder="usuario o correo@ejemplo.com"
+            placeholder="correo@ejemplo.com"
           />
 
           <PasswordInput
@@ -66,20 +65,6 @@ export default function LoginPage() {
             onChange={handleChange}
             placeholder="********"
           />
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              className="
-                text-sm
-                text-neon-blue
-                hover:underline
-              "
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
-          </div>
 
           <AuthButton type="submit">
             Iniciar Sesión

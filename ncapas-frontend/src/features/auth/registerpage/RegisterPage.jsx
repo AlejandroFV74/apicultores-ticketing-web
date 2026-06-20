@@ -7,10 +7,15 @@ import AuthInput from "../components/AuthInput";
 import PasswordInput from "../components/PasswordInput";
 import AuthButton from "../components/AuthButton";
 import AuthFooterLink from "../components/AuthFooterLink";
+import { Register } from "../../../services/auth.service";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
+
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    username: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -27,8 +32,8 @@ export default function RegisterPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    console.log(form);
+    Register(form);
+    navigate("/login");
   };
 
   return (
@@ -44,10 +49,10 @@ export default function RegisterPage() {
         >
           <AuthInput
             label="Usuario"
-            name="username"
-            value={form.username}
+            name="fullName"
+            value={form.fullName}
             onChange={handleChange}
-            placeholder="diego123"
+            placeholder="Jon doe"
           />
 
           <AuthInput
