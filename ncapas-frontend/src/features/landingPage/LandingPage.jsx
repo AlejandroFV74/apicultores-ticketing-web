@@ -5,6 +5,7 @@ import { HeroSection } from "./components/hero-section";
 import Footer from "./components/Footer";
 import { useEvents } from "../../hooks/useEvents";
 
+
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const {

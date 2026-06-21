@@ -1,8 +1,20 @@
 const links = [
-  "Explorar",
-  "Categorías",
-  "Favoritos",
-  "Soporte",
+  {
+    label: "Explorar",
+    path: "/",
+  },
+  {
+    label: "Categorías",
+    path: "/categories",
+  },
+  {
+    label: "Historial de compras",
+    path: "/mytickets",
+  },
+  {
+    label: "Soporte",
+    path: "/support",
+  },
 ];
 
 export default function NavigationLinks({
@@ -12,15 +24,15 @@ export default function NavigationLinks({
     <>
       {links.map((link) => (
         <a
-          key={link}
-          href="#"
+          key={link.path}
+          href={link.path}
           className={
             mobile
               ? "block text-sm font-medium hover:text-neon-blue transition-colors"
               : "text-sm font-medium hover:text-neon-blue transition-colors"
           }
         >
-          {link}
+          {link.label}
         </a>
       ))}
     </>
