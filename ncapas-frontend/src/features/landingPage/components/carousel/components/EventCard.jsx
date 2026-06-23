@@ -10,7 +10,7 @@ export default function EventCard({ event }) {
         {/* Imagen */}
         <div className="relative h-64 overflow-hidden bg-muted">
           <img
-            src={event.image}
+            src={"public/event_background.jpg"}
             alt={event.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />

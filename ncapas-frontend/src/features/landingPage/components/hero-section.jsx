@@ -33,27 +33,7 @@ export function HeroSection() {
           </p>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-          <button className="group relative px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 overflow-hidden">
-            {/* Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-neon-blue to-neon-purple opacity-100 transition-opacity group-hover:opacity-90" />
-
-            {/* Glow Effect */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 bg-gradient-to-r from-neon-blue to-neon-purple" />
-
-            {/* Content */}
-            <span className="relative flex items-center gap-2 text-background">
-              Explorar Eventos
-              {/* ✅ SVG Nativo para ArrowRight */}
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </span>
-          </button>
-
-          <button className="px-8 py-4 rounded-lg font-semibold text-lg border border-neon-blue/50 text-neon-blue glass-card backdrop-blur-xl transition-all duration-300 hover:border-neon-blue hover:bg-neon-blue/10">
-            Aprende Más
-          </button>
-        </div>
+        
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-8 pt-12 border-t border-neon-blue/20">

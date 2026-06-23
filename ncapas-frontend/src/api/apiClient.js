@@ -17,5 +17,17 @@ export async function apiClient(endpoint, options = {}) {
     headers: headers,
   });
 
+  if(response.status == 401){
+    console.warn("La sesión ha expirado o el token es inválido. Limpiando almacenamiento local...");
+    
+    
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    
+    window.location.href = "/login";
+    
+    throw new Error("Sesión expirada. Redirigiendo al login...");
+  }
+
   return response;
 }
