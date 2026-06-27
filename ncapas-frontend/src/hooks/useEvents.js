@@ -13,7 +13,11 @@ export function useEvents() {
 
         setEvents(data);
       } catch (err) {
-        setError(err);
+        if(err.status === 404){
+          setEvents([]);
+        }else{
+          setError(err);
+        }
       } finally {
         setLoading(false);
       }
