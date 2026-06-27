@@ -24,6 +24,8 @@ export function SeatMap({
       vipPrice: 150,
       generalSeats: 420,
       generalPrice: 75,
+      // default limit per user if backend/event doesn't provide it
+      maxTicketsPerUser: 4,
     };
   const baseSeats = useMemo(
     () =>
@@ -93,6 +95,7 @@ export function SeatMap({
           selectedTotalPrice={seats
             .filter((s) => selectedSeats.includes(s.id))
             .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
+          maxSeatsPerUser={effectiveSeatingConfig?.maxTicketsPerUser ?? null}
         />
       </div>
 
@@ -115,15 +118,7 @@ export function SeatMap({
             Asientos
           </h3>
 
-          <p className="text-sm text-foreground/60">
-            {
-              seats.filter(
-                (seat) =>
-                  seat.status === "available"
-              ).length
-            }{" "}
-            disponibles
-          </p>
+
         </div>
 
         <div className="space-y-3 pl-4">

@@ -1,6 +1,7 @@
 export default function PurchaseSummary({
   selectedSeats = [],
   selectedTotalPrice = 0,
+  maxSeatsPerUser = null,
   mobile = false,
 }) {
   const totalSeats = selectedSeats.length;
@@ -9,6 +10,15 @@ export default function PurchaseSummary({
     ? Number(selectedTotalPrice)
     : 0;
 
+  const limit =
+    maxSeatsPerUser === null || maxSeatsPerUser === undefined
+      ? null
+      : Number(maxSeatsPerUser);
+
+  const limitReached =
+    limit !== null && Number.isFinite(limit)
+      ? totalSeats >= limit
+      : false;
 
   return (
     <div
@@ -43,13 +53,32 @@ export default function PurchaseSummary({
         </span>
       </div>
 
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between mb-2">
         <span>Total</span>
 
         <span className="font-bold text-xl">
           ${Number.isFinite(totalPrice) ? totalPrice : 0}
         </span>
       </div>
+
+      {limit !== null ? (
+        <div className="mb-4 text-sm">
+          <div
+            className={
+              limitReached
+                ? "text-yellow-400 font-bold"
+                : "text-foreground/60"
+            }
+          >
+            {totalSeats} / {limit} selected
+          </div>
+          {limitReached ? (
+            <div className="text-yellow-400 font-bold mt-1">
+              You have reach the limit per user
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <button
         disabled={!totalSeats}
