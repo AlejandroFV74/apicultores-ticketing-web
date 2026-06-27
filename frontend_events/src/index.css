@@ -1,0 +1,45 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body;
+  }
+}
+
+@layer components {
+  .ticket-card {
+    position: relative;
+    background: #fff;
+    border-radius: 4px;
+  }
+
+  .ticket-card::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    right: 28%;
+    width: 20px;
+    height: 20px;
+    background: var(--ticket-notch-bg, #f5f0e6);
+    border-radius: 50%;
+  }
+
+  .ticket-card::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    right: 28%;
+    width: 20px;
+    height: 20px;
+    background: var(--ticket-notch-bg, #f5f0e6);
+    border-radius: 50%;
+  }
+
+  .perforated {
+    border-right: 2px dashed #d9c9ad;
+  }
+}
