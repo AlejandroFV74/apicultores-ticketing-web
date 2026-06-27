@@ -1,13 +1,14 @@
 export default function PurchaseSummary({
   selectedSeats = [],
+  selectedTotalPrice = 0,
   mobile = false,
 }) {
   const totalSeats = selectedSeats.length;
 
-  const totalPrice = selectedSeats.reduce(
-    (acc, seat) => acc + seat.price,
-    0
-  );
+  const totalPrice = Number.isFinite(Number(selectedTotalPrice))
+    ? Number(selectedTotalPrice)
+    : 0;
+
 
   return (
     <div
@@ -38,7 +39,7 @@ export default function PurchaseSummary({
         </h2>
 
         <span className="text-neon-blue font-bold">
-          {totalSeats} asiento(s)
+          {Number.isFinite(totalSeats) ? totalSeats : 0} asiento(s)
         </span>
       </div>
 
@@ -46,7 +47,7 @@ export default function PurchaseSummary({
         <span>Total</span>
 
         <span className="font-bold text-xl">
-          ${totalPrice}
+          ${Number.isFinite(totalPrice) ? totalPrice : 0}
         </span>
       </div>
 

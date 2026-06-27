@@ -88,17 +88,24 @@ export function SeatMap({
     <div className="grid lg:grid-cols-[320px_1fr] gap-8">
       
       <div className="hidden lg:block w-80 flex-shrink-0">
-      <PurchaseSummary
-        selectedSeats={selectedSeats}
-      />
+        <PurchaseSummary
+          selectedSeats={selectedSeats}
+          selectedTotalPrice={seats
+            .filter((s) => selectedSeats.includes(s.id))
+            .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
+        />
       </div>
 
       <div className ="lg:hidden">
-            <PurchaseSummary
-                selectedSeats={selectedSeats}
-                mobile
-            />
+        <PurchaseSummary
+          selectedSeats={selectedSeats}
+          selectedTotalPrice={seats
+            .filter((s) => selectedSeats.includes(s.id))
+            .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
+          mobile
+        />
       </div>
+
 
       <div className="space-y-12">
         <Stage />
