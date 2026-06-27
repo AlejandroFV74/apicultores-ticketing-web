@@ -4,7 +4,29 @@ export default function SeatLegend() {
       <div className="flex items-center gap-3">
         <div className="seat seat-available" />
         <span className="text-sm text-foreground">
-          Available
+          General Available
+        </span>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="seat seat-available relative">
+          <span
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{
+              color: "#808000",
+              fontWeight: 900,
+              fontSize: "0.75rem",
+              lineHeight: 1,
+              textShadow:
+                "0 0 8px rgba(251, 191, 36, 0.35)",
+              pointerEvents: "none",
+            }}
+          >
+            V
+          </span>
+        </div>
+        <span className="text-sm text-foreground">
+          VIP Available
         </span>
       </div>
 
