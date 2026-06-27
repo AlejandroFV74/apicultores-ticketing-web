@@ -12,6 +12,10 @@ export const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
+    path: "/eventmap/:eventId",
+    element: <SeatMap />,
+  },
+  {
     path: "/eventmap/",
     element: <SeatMap />,
   },

@@ -1,23 +1,75 @@
+import { useEffect, useMemo, useState } from "react";
 import { useSeatSelection } from "../../hooks/useSeatSelection";
-import { generateSeats } from "./data/tmp/generateSeats";
 import Stage from "./components/Stage";
 import SeatLegend from "./components/SeatLegend";
-import SeatSection from "./components/SeatSection";
 import PurchaseSummary from "./components/PurchaseSummary";
 import SeatRow from "./components/SeatRow";
+import { buildSeatsFromSeatingConfig } from "./data/buildSeatsFromSeatingConfig";
+import { applyBookedStatusToSeats } from "./data/normalizeEventSeats";
+import { getSeatsByEvent } from "../../services/seat.service";
 
+import { useParams } from "react-router-dom";
 
 export function SeatMap({
+  eventId,
+  seatingConfig,
   onSelectionChange,
 }) {
+  const params = useParams();
+  const effectiveEventId = eventId ?? params?.eventId;
+  
+  const effectiveSeatingConfig =
+    seatingConfig || {
+      vipSeats: 140,
+      vipPrice: 150,
+      generalSeats: 420,
+      generalPrice: 75,
+    };
+  const baseSeats = useMemo(
+    () =>
+      buildSeatsFromSeatingConfig(effectiveSeatingConfig || {}),
+    [effectiveSeatingConfig]
+  );
+
+  const [initialSeats, setInitialSeats] = useState(baseSeats);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSeats() {
+      try {
+        if (!effectiveEventId) {
+          setInitialSeats(baseSeats);
+          return;
+        }
+
+        const backendSeats = await getSeatsByEvent(effectiveEventId);
+        const merged = applyBookedStatusToSeats(
+          baseSeats,
+          backendSeats
+        );
+
+        if (!cancelled) setInitialSeats(merged);
+      } catch (e) {
+        // fallback to generated seats if backend call fails
+        if (!cancelled) setInitialSeats(baseSeats);
+        console.error(e);
+      }
+    }
+
+    loadSeats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, baseSeats]);
+
   const {
     seats,
     selectedSeats,
     handleSeatClick,
-  } = useSeatSelection(
-    generateSeats(),
-    onSelectionChange
-  );
+  } = useSeatSelection(initialSeats, onSelectionChange);
+
 
   const groupedByRow = seats.reduce(
     (acc, seat) => {
