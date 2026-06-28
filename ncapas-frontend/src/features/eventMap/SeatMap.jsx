@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSeatSelection } from "../../hooks/useSeatSelection";
 import Stage from "./components/Stage";
 import SeatLegend from "./components/SeatLegend";
 import PurchaseSummary from "./components/PurchaseSummary";
 import SeatRow from "./components/SeatRow";
-import { buildSeatsFromSeatingConfig } from "./data/buildSeatsFromSeatingConfig";
-import { applyBookedStatusToSeats } from "./data/normalizeEventSeats";
 import { getSeatsByEvent } from "../../services/seat.service";
 
 import { useNavigate, useParams } from "react-router-dom";
+import { getEventById } from "../../services/event.service";
 
 const SESSION_KEY_TIMER_END_AT = "reservation_timer_end_at";
 const DEFAULT_TIMEOUT_SECONDS = 15 * 60;
@@ -20,39 +19,30 @@ function formatMMSS(totalSeconds) {
   return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
 }
 
-const DEFAULT_SEATING_CONFIG = {
-  vipSeats: 140,
-  vipPrice: 150,
-  generalSeats: 420,
-  generalPrice: 75,
-  maxTicketsPerUser: 4,
-};
-
-export function SeatMap({
-  eventId,
-  seatingConfig,
-  onSelectionChange,
-}) {
+export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
   const params = useParams();
   const navigate = useNavigate();
   const effectiveEventId = eventId ?? params?.eventId;
+  const SEATS_PER_ROW = 28;
+  const [initialSeats, setInitialSeats] = useState([]);
 
-  
+  const normalizeBackendSeat = (seat, index) => {
+    const status = seat.status === "AVAILABLE" ? "available" : "booked";
 
-  const effectiveSeatingConfig =
-    seatingConfig ?? DEFAULT_SEATING_CONFIG;
-
-  const baseSeats = useMemo(
-    () =>
-      buildSeatsFromSeatingConfig(effectiveSeatingConfig || {}),
-    [effectiveSeatingConfig]
-  );
-  console.log("baseSeats recalculado");
-
-  const [initialSeats, setInitialSeats] = useState(baseSeats);
+    return {
+      id: seat.id,
+      row: String.fromCharCode(65 + Math.floor(index / SEATS_PER_ROW)),
+      number: (index % SEATS_PER_ROW) + 1,
+      tier: seat.seatType === "VIP" ? "vip" : "general",
+      price: Number(seat.price),
+      status,
+    };
+  };
 
   // Reservation timer
-  const [remainingSeconds, setRemainingSeconds] = useState(DEFAULT_TIMEOUT_SECONDS);
+  const [remainingSeconds, setRemainingSeconds] = useState(
+    DEFAULT_TIMEOUT_SECONDS,
+  );
   const [expired, setExpired] = useState(false);
 
   useEffect(() => {
@@ -63,10 +53,7 @@ export function SeatMap({
       : Date.now() + DEFAULT_TIMEOUT_SECONDS * 1000;
 
     if (!rawEndAt) {
-      sessionStorage.setItem(
-        SESSION_KEY_TIMER_END_AT,
-        String(endAtMs)
-      );
+      sessionStorage.setItem(SESSION_KEY_TIMER_END_AT, String(endAtMs));
     }
 
     const tick = () => {
@@ -76,8 +63,8 @@ export function SeatMap({
       console.log({
         msLeft,
         secondsLeft,
-        expired
-    });
+        expired,
+      });
 
       if (secondsLeft <= 0) {
         console.log("ENTRÓ AL IF");
@@ -99,28 +86,42 @@ export function SeatMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
+  const { seats, selectedSeats, handleSeatClick } = useSeatSelection(
+    initialSeats,
+    onSelectionChange,
+  );
+
+  console.log("initialSeats:", initialSeats.length);
+console.log("seats:", seats.length);
+
   useEffect(() => {
-    console.log("loadSeats ejecutado");
     let cancelled = false;
 
     async function loadSeats() {
       try {
         if (!effectiveEventId) {
-          setInitialSeats(baseSeats);
+          console.warn("SeatMap: missing effectiveEventId", {
+            eventId,
+            paramsEventId: params?.eventId,
+          });
           return;
         }
 
         const backendSeats = await getSeatsByEvent(effectiveEventId);
-        const merged = applyBookedStatusToSeats(
-          baseSeats,
-          backendSeats
-        );
+        console.log("Respuesta:", backendSeats);
+        console.log("Es arreglo:", Array.isArray(backendSeats));
+        console.log("Cantidad:", backendSeats?.length);
 
-        if (!cancelled) setInitialSeats(merged);
+        if (!cancelled) {
+          console.log("backendSeats", backendSeats);
+          setInitialSeats(
+            backendSeats.map((seat, index) =>
+              normalizeBackendSeat(seat, index),
+            ),
+          );
+        }
       } catch (e) {
-        // fallback to generated seats if backend call fails
-        if (!cancelled) setInitialSeats(baseSeats);
-        console.error(e);
+        console.error("SeatMap: loadSeats error", e);
       }
     }
 
@@ -129,26 +130,43 @@ export function SeatMap({
     return () => {
       cancelled = true;
     };
-  }, [eventId, baseSeats]);
+  }, [effectiveEventId]);
 
-  const {
-    seats,
-    selectedSeats,
-    handleSeatClick,
-  } = useSeatSelection(initialSeats, onSelectionChange);
+  const groupedByRow = seats.reduce((acc, seat) => {
+    if (!acc[seat.row]) {
+      acc[seat.row] = [];
+    }
 
-  const groupedByRow = seats.reduce(
-    (acc, seat) => {
-      if (!acc[seat.row]) {
-        acc[seat.row] = [];
+    acc[seat.row].push(seat);
+
+    return acc;
+  }, {});
+
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadEvent() {
+    try {
+      if (!effectiveEventId) return;
+
+      const event = await getEventById(effectiveEventId);
+
+      if (!cancelled) {
+        setEvent(event);
       }
+    } catch (e) {
+      console.error("SeatMap: loadEvent error", e);
+    }
+  }
 
-      acc[seat.row].push(seat);
+  loadEvent();
 
-      return acc;
-    },
-    {}
-  );
+  return () => {
+    cancelled = true;
+  };
+}, [effectiveEventId]);
 
   return (
     <div className="grid lg:grid-cols-[320px_1fr] gap-8">
@@ -158,11 +176,11 @@ export function SeatMap({
           selectedTotalPrice={seats
             .filter((s) => selectedSeats.includes(s.id))
             .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
-          maxSeatsPerUser={effectiveSeatingConfig?.maxTicketsPerUser ?? null}
+          maxSeatsPerUser={event?.maxTicketsPerUser ?? null}
         />
       </div>
 
-      <div className ="lg:hidden">
+      <div className="lg:hidden">
         <PurchaseSummary
           selectedSeats={selectedSeats}
           selectedTotalPrice={seats
@@ -177,19 +195,17 @@ export function SeatMap({
 
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold">
-              Asientos
-            </h3>
+            <h3 className="text-xl font-bold">Asientos</h3>
           </div>
 
           <div
             className={
-              expired
-                ? "text-yellow-400 font-bold"
-                : "text-foreground/60"
+              expired ? "text-yellow-400 font-bold" : "text-foreground/60"
             }
           >
-            {expired ? "El tiempo se acabó" : `Tiempo restante: ${formatMMSS(remainingSeconds)}`}
+            {expired
+              ? "El tiempo se acabó"
+              : `Tiempo restante: ${formatMMSS(remainingSeconds)}`}
           </div>
         </div>
 

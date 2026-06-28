@@ -6,8 +6,15 @@ export async function getEvents(){
     const response =
     await apiClient(BASE_ENDPOINT);
 
-    return response.json();
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Error al obtener eventos");
+    }
+
+    return data?.data ?? data;
 }
+
 
 export async function searchEvents(title) {
   const response = await apiClient(`${BASE_ENDPOINT}/search?title=${encodeURIComponent(title)}`);
