@@ -81,7 +81,7 @@ export default function MyTicketsPage() {
           <div className="space-y-6">
             {myEvents.map((event) => (
               <PurchasedEventCard
-                key={event.id}
+                key={event.ticketId}
                 event={event}
                 onViewQR={handleViewQR}
               />
