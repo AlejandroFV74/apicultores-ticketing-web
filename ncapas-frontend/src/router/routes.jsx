@@ -9,6 +9,9 @@ import EventDetailPage from "../features/eventDetail/EventDetailPage";
 import OrganizerEventsPage from "../features/eventOrganizer/OrganizerEventsPage";
 import CreateEventPage from "../features/eventOrganizer/CreateEventPage";
 import EditEventPage from "../features/eventOrganizer/EditEventPage";
+import ReservationConfirmationPage from "../features/purchaseTickets/ReservationConfirmationPage";
+import PaymentSelectionPage from "../features/purchaseTickets/PaymentSelectionPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +29,14 @@ export const router = createBrowserRouter([
   {
     path: "/eventmap/",
     element: <SeatMap />,
+  },
+  {
+    path: "/reservation/confirmation/:eventId",
+    element: <ReservationConfirmationPage />,
+  },
+  {
+    path: "/payment/:eventId",
+    element: <PaymentSelectionPage />,
   },
   {
     path: "/login",

@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
-import { useSeatSelection } from "../../hooks/useSeatSelection";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Stage from "./components/Stage";
 import SeatLegend from "./components/SeatLegend";
 import PurchaseSummary from "./components/PurchaseSummary";
 import SeatRow from "./components/SeatRow";
 import { getSeatsByEvent } from "../../services/seat.service";
-
-import { useNavigate, useParams } from "react-router-dom";
 import { getEventById } from "../../services/event.service";
-
-const SESSION_KEY_TIMER_END_AT = "reservation_timer_end_at";
-const DEFAULT_TIMEOUT_SECONDS = 15 * 60;
-
-function formatMMSS(totalSeconds) {
-  const safe = Math.max(0, Math.floor(totalSeconds));
-  const mm = Math.floor(safe / 60);
-  const ss = safe % 60;
-  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-}
+import { useSeatSelection } from "../../hooks/useSeatSelection";
+import { createReservation } from "../../services/reservation.service";
+import {
+  clearReservationFlowState,
+  setReservationFlowState,
+} from "../purchaseTickets/purchaseFlowState";
 
 export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
   const params = useParams();
@@ -39,60 +33,18 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
     };
   };
 
-  // Reservation timer
-  const [remainingSeconds, setRemainingSeconds] = useState(
-    DEFAULT_TIMEOUT_SECONDS,
-  );
-  const [expired, setExpired] = useState(false);
 
-  useEffect(() => {
-    const rawEndAt = sessionStorage.getItem(SESSION_KEY_TIMER_END_AT);
-
-    const endAtMs = rawEndAt
-      ? Number(rawEndAt)
-      : Date.now() + DEFAULT_TIMEOUT_SECONDS * 1000;
-
-    if (!rawEndAt) {
-      sessionStorage.setItem(SESSION_KEY_TIMER_END_AT, String(endAtMs));
-    }
-
-    const tick = () => {
-      const msLeft = endAtMs - Date.now();
-      const secondsLeft = Math.ceil(msLeft / 1000);
-
-      console.log({
-        msLeft,
-        secondsLeft,
-        expired,
-      });
-
-      if (secondsLeft <= 0) {
-        console.log("ENTRÓ AL IF");
-        setRemainingSeconds(0);
-        setExpired(true);
-        sessionStorage.removeItem(SESSION_KEY_TIMER_END_AT);
-        navigate("/", { replace: true });
-        console.log("DESPUÉS DEL NAVIGATE");
-        return;
-      }
-
-      setRemainingSeconds(secondsLeft);
-    };
-
-    tick();
-    const intervalId = setInterval(tick, 1000);
-
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
 
   const { seats, selectedSeats, handleSeatClick } = useSeatSelection(
     initialSeats,
     onSelectionChange,
   );
 
-  console.log("initialSeats:", initialSeats.length);
-console.log("seats:", seats.length);
+  const selectedTotalPrice = useMemo(() => {
+    return seats
+      .filter((s) => selectedSeats.includes(s.id))
+      .reduce((acc, s) => acc + Number(s?.price ?? 0), 0);
+  }, [seats, selectedSeats]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,12 +60,8 @@ console.log("seats:", seats.length);
         }
 
         const backendSeats = await getSeatsByEvent(effectiveEventId);
-        console.log("Respuesta:", backendSeats);
-        console.log("Es arreglo:", Array.isArray(backendSeats));
-        console.log("Cantidad:", backendSeats?.length);
 
         if (!cancelled) {
-          console.log("backendSeats", backendSeats);
           setInitialSeats(
             backendSeats.map((seat, index) =>
               normalizeBackendSeat(seat, index),
@@ -143,51 +91,150 @@ console.log("seats:", seats.length);
   }, {});
 
   const [event, setEvent] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  async function loadEvent() {
-    try {
-      if (!effectiveEventId) return;
+    async function loadEvent() {
+      try {
+        if (!effectiveEventId) return;
 
-      const event = await getEventById(effectiveEventId);
+        const event = await getEventById(effectiveEventId);
 
-      if (!cancelled) {
-        setEvent(event);
+        if (!cancelled) {
+          setEvent(event);
+        }
+      } catch (e) {
+        console.error("SeatMap: loadEvent error", e);
       }
-    } catch (e) {
-      console.error("SeatMap: loadEvent error", e);
     }
-  }
 
-  loadEvent();
+    loadEvent();
 
-  return () => {
-    cancelled = true;
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveEventId]);
+
+  const maxSeatsPerUser = event?.maxTicketsPerUser ?? null;
+
+  const selectedCount = selectedSeats.length;
+
+  const canContinue =
+    selectedCount > 0 &&
+    (maxSeatsPerUser == null ||
+      Number.isFinite(Number(maxSeatsPerUser))
+      ? selectedCount <= Number(maxSeatsPerUser)
+      : true);
+
+  const handleContinue = async () => {
+    if (!effectiveEventId) return;
+    if (submitting) return;
+
+    if (!selectedSeats?.length) {
+      alert("Select at least one seat.");
+      return;
+    }
+
+    if (
+      maxSeatsPerUser != null &&
+      Number.isFinite(Number(maxSeatsPerUser)) &&
+      selectedSeats.length > Number(maxSeatsPerUser)
+    ) {
+      alert("You have selected more seats than allowed.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const reservation = await createReservation({
+        eventId: effectiveEventId,
+        seatsIds: selectedSeats,
+      });
+
+      // expected: { reservationId, expiresAt, seatsIds? }
+      const reservationId =
+        reservation?.reservationId ??
+        reservation?.id ??
+        reservation?.reservation?.id;
+      const expiresAt =
+        reservation?.expiresAt ?? reservation?.expires_at;
+
+        console.log(reservation);
+
+      setReservationFlowState(reservation);
+
+      navigate(`/reservation/confirmation/${effectiveEventId}`);
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Could not create reservation");
+    } finally {
+      setSubmitting(false);
+    }
   };
-}, [effectiveEventId]);
 
   return (
     <div className="grid lg:grid-cols-[320px_1fr] gap-8">
       <div className="hidden lg:block w-80 flex-shrink-0">
-        <PurchaseSummary
-          selectedSeats={selectedSeats}
-          selectedTotalPrice={seats
-            .filter((s) => selectedSeats.includes(s.id))
-            .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
-          maxSeatsPerUser={event?.maxTicketsPerUser ?? null}
-        />
+        <div className="glass-card p-6 sticky top-24">
+          <PurchaseSummary
+            selectedSeats={selectedSeats}
+            selectedTotalPrice={selectedTotalPrice}
+            maxSeatsPerUser={maxSeatsPerUser}
+          />
+          <button
+            disabled={!canContinue || submitting}
+            onClick={handleContinue}
+            className="
+              mt-4
+              w-full
+              py-3
+              rounded-lg
+              bg-gradient-to-r
+              from-neon-blue
+              to-neon-purple
+              text-white
+              font-semibold
+              disabled:opacity-50
+            "
+          >
+            {submitting ? "Creating..." : "Continue"}
+          </button>
+        </div>
       </div>
 
       <div className="lg:hidden">
-        <PurchaseSummary
-          selectedSeats={selectedSeats}
-          selectedTotalPrice={seats
-            .filter((s) => selectedSeats.includes(s.id))
-            .reduce((acc, s) => acc + Number(s?.price ?? 0), 0)}
-          mobile
-        />
+        <div className="relative">
+          <PurchaseSummary
+            selectedSeats={selectedSeats}
+            selectedTotalPrice={selectedTotalPrice}
+            mobile
+            maxSeatsPerUser={maxSeatsPerUser}
+          />
+          <button
+            disabled={!canContinue || submitting}
+            onClick={handleContinue}
+            className="
+              fixed
+              bottom-4
+              right-4
+              left-4
+              z-50
+              mt-20
+              py-3
+              rounded-lg
+              bg-gradient-to-r
+              from-neon-blue
+              to-neon-purple
+              text-white
+              font-semibold
+              disabled:opacity-50
+            "
+          >
+            {submitting ? "Creating..." : "Continue to Reservation"}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-12">
@@ -198,14 +245,10 @@ console.log("seats:", seats.length);
             <h3 className="text-xl font-bold">Asientos</h3>
           </div>
 
-          <div
-            className={
-              expired ? "text-yellow-400 font-bold" : "text-foreground/60"
-            }
-          >
-            {expired
-              ? "El tiempo se acabó"
-              : `Tiempo restante: ${formatMMSS(remainingSeconds)}`}
+          <div className="text-foreground/60">
+            {maxSeatsPerUser != null && Number.isFinite(Number(maxSeatsPerUser))
+              ? `${selectedCount} / ${Number(maxSeatsPerUser)} selected`
+              : `${selectedCount} selected`}
           </div>
         </div>
 
