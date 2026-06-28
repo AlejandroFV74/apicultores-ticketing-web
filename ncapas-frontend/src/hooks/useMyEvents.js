@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
-import { getMyEvents, deleteEvent as deleteEventRequest } from "../api/eventService";
+import {
+  getMyEvents,
+  deleteEvent as deleteEventRequest,
+} from "../services/event.service";
 
 export function useMyEvents() {
   const [events, setEvents] = useState([]);
@@ -9,10 +12,10 @@ export function useMyEvents() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const responseData = await getMyEvents();
-      setEvents(responseData.data || responseData); 
-      
+      setEvents(responseData.data || responseData);
     } catch (err) {
       setError(err.message || "No se pudieron cargar tus eventos.");
     } finally {
@@ -24,7 +27,9 @@ export function useMyEvents() {
     try {
       setError(null);
       await deleteEventRequest(id);
-      setEvents((prev) => prev.filter((e) => e.eventId !== id));
+      setEvents((prev) =>
+        prev.filter((event) => (event.eventId ?? event.id) !== id)
+      );
     } catch (err) {
       setError(err.message || "No se pudo eliminar el evento.");
     }

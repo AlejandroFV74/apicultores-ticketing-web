@@ -4,7 +4,8 @@ import QRModal from "./components/QRModal";
 import { useEffect, useState } from "react";
 import { getUser } from "../../services/auth.service";
 import { getMyTickets } from "../../services/ticket.service";
-import Header from "../landingPage/components/Header"
+import Header from "../landingPage/components/Header";
+import {useNavigate } from "react-router-dom";
 
 export default function MyTicketsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function MyTicketsPage() {
   const [showQR, setShowQR] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const user = getUser();
+  const navigate = useNavigate();
 
   const handleViewQR = (event) => {
     setSelectedEvent(event);
@@ -25,6 +27,14 @@ export default function MyTicketsPage() {
   }
 
   useEffect(() => {
+    if(!user || !user.userId){
+      navigate("/login");
+    }
+  },[user,navigate])
+
+  useEffect(() => {
+    if (!user || !user.userId) return;
+
     const loadTickets = async () => {
       try {
         const tickets = await getMyTickets(user.userId);
@@ -37,7 +47,7 @@ export default function MyTicketsPage() {
     };
 
     loadTickets();
-  }, [user.userId]);
+  }, [user?.userId]);
 
   return (
     

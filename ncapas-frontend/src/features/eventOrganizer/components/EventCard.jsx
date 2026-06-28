@@ -1,14 +1,34 @@
 const statusStyles = {
-  DRAFT: { label: "Borrador", bg: "bg-ink/5", text: "text-ink-soft", border: "border-ink/20" },
-  ACTIVE: { label: "Activo", bg: "bg-stamp-green/10", text: "text-stamp-green", border: "border-stamp-green/30" },
-  CANCELLED: { label: "Cancelado", bg: "bg-stamp-red/10", text: "text-stamp-red", border: "border-stamp-red/30" },
-  FINISHED: { label: "Finalizado", bg: "bg-ink/5", text: "text-ink-soft", border: "border-ink/20" },
+  DRAFT: {
+    label: "Borrador",
+    bg: "bg-foreground/5",
+    text: "text-foreground/60",
+    border: "border-foreground/15",
+  },
+  ACTIVE: {
+    label: "Activo",
+    bg: "bg-neon-blue/10",
+    text: "text-neon-blue",
+    border: "border-neon-blue/40",
+  },
+  CANCELLED: {
+    label: "Cancelado",
+    bg: "bg-destructive/10",
+    text: "text-destructive",
+    border: "border-destructive/40",
+  },
+  FINISHED: {
+    label: "Finalizado",
+    bg: "bg-neon-purple/10",
+    text: "text-neon-purple",
+    border: "border-neon-purple/40",
+  },
 };
 
 const formatDate = (value) => {
   if (!value) return "Sin fecha";
-  const date = new Date(value);
-  return date.toLocaleDateString("es-SV", {
+
+  return new Date(value).toLocaleDateString("es-SV", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -17,60 +37,68 @@ const formatDate = (value) => {
   });
 };
 
-function EventCard({ event, showActions = false, onEdit, onDelete }) {
+export default function EventCard({
+  event,
+  showActions = false,
+  onEdit,
+  onDelete,
+}) {
   const status = statusStyles[event.status] || statusStyles.DRAFT;
 
   return (
-    <div className="ticket-card flex shadow-sm hover:shadow-md transition-shadow border border-ink/10 overflow-hidden">
-      <div className="flex-1 p-5">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-display font-semibold text-xl text-ink leading-tight uppercase tracking-wide">
+    <article className="glass-card overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+      <div className="p-5">
+        <div className="mb-2 flex items-start justify-between gap-3">
+          <h3 className="text-xl font-semibold leading-tight text-foreground">
             {event.title}
           </h3>
+
           <span
-            className={`shrink-0 text-xs font-semibold px-2 py-1 rounded border ${status.bg} ${status.text} ${status.border} uppercase tracking-wider`}
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${status.bg} ${status.text} ${status.border}`}
           >
             {status.label}
           </span>
         </div>
 
-        <p className="text-sm text-ink-soft flex items-center gap-1.5 mb-1">
+        <p className="mb-1 text-sm text-foreground/60">
           <span className="font-medium">Lugar:</span> {event.venue}
         </p>
 
-        <p className="text-sm text-ink-soft mb-3">
-          {formatDate(event.startDate)} — {formatDate(event.endDate)}
+        <p className="mb-3 text-sm text-foreground/60">
+          {formatDate(event.startDate)} - {formatDate(event.endDate)}
         </p>
 
-        {event.description && (
-          <p className="text-sm text-ink-soft/80 line-clamp-2 mb-3">{event.description}</p>
-        )}
+        {event.description ? (
+          <p className="mb-3 line-clamp-2 text-sm text-foreground/70">
+            {event.description}
+          </p>
+        ) : null}
 
-        {event.maxTicketsPerUser != null && (
-          <p className="text-xs text-ink-soft/70 uppercase tracking-wide">
+        {event.maxTicketsPerUser != null ? (
+          <p className="text-xs uppercase tracking-wide text-foreground/50">
             Máx. {event.maxTicketsPerUser} boletos por persona
           </p>
-        )}
+        ) : null}
       </div>
 
-      {showActions && (
-        <div className="perforated flex flex-col justify-center gap-2 px-4 bg-paper-dark/40 min-w-[110px]">
+      {showActions ? (
+        <div className="flex gap-3 border-t border-neon-blue/20 bg-muted/20 p-4">
           <button
+            type="button"
             onClick={() => onEdit?.(event)}
-            className="text-xs font-semibold uppercase tracking-wide text-ink bg-stub-light/40 hover:bg-stub-light/70 border border-stub/40 rounded px-3 py-2 transition-colors"
+            className="flex-1 rounded-lg border border-neon-blue/40 bg-neon-blue/10 px-3 py-2 text-sm font-semibold text-neon-blue transition-colors hover:bg-neon-blue/20"
           >
             Modificar
           </button>
           <button
+            type="button"
             onClick={() => onDelete?.(event)}
-            className="text-xs font-semibold uppercase tracking-wide text-stamp-red bg-stamp-red/5 hover:bg-stamp-red/15 border border-stamp-red/30 rounded px-3 py-2 transition-colors"
+            className="flex-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
           >
             Eliminar
           </button>
         </div>
-      )}
-    </div>
+      ) : null}
+    </article>
   );
 }
-
-export default EventCard;

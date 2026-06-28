@@ -5,6 +5,10 @@ import { SeatMap } from "../features/eventMap/SeatMap";
 import LoginPage from "../features/auth/loginPage/LoginPage";
 import RegisterPage from "../features/auth/registerpage/RegisterPage";
 import MyTicketsPage from "../features/purchaseTickets/MyTicketsPage";
+import EventDetailPage from "../features/eventDetail/EventDetailPage";
+import OrganizerEventsPage from "../features/eventOrganizer/OrganizerEventsPage";
+import CreateEventPage from "../features/eventOrganizer/CreateEventPage";
+import EditEventPage from "../features/eventOrganizer/EditEventPage";
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +18,10 @@ export const router = createBrowserRouter([
   {
     path: "/eventmap/:eventId",
     element: <SeatMap />,
+  },
+  {
+    path: "/events/:eventId",
+    element: <EventDetailPage />,
   },
   {
     path: "/eventmap/",
@@ -32,11 +40,27 @@ export const router = createBrowserRouter([
     element: <MyTicketsPage />,
   },
   {
-    path: "/",
-    element: <LandingPage />,
+    path: "/organizer",
+    element: <OrganizerEventsPage />,
   },
   {
-    path: "/",
-    element: <LandingPage />,
+    path: "/organizer/events",
+    element: <OrganizerEventsPage />,
+  },
+  {
+    path: "/organizer/events/edit",
+    element: <OrganizerEventsPage />,
+  },
+  {
+    path: "/organizer/events/create",
+    element: <CreateEventPage />,
+  },
+  {
+    path: "/organizer/create",
+    element: <CreateEventPage />,
+  },
+  {
+    path: "/organizer/events/:eventId/edit",
+    element: <EditEventPage />,
   },
 ]);

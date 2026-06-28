@@ -8,10 +8,12 @@ import PasswordInput from "../components/PasswordInput";
 import AuthButton from "../components/AuthButton";
 import AuthFooterLink from "../components/AuthFooterLink";
 import { Login } from "../../../services/auth.service";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.redirectTo || "/";
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -30,7 +32,7 @@ export default function LoginPage() {
     e.preventDefault();
     Login(form).then((res) => {
       if (res) {
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }
     });
   };
