@@ -1,6 +1,18 @@
 import Modal from "./Modal";
 import { QRCodeSVG } from 'qrcode.react';
 
+function formatDateTime(date) {
+  if (!date) return "Por confirmar";
+
+  return new Date(date).toLocaleString("es-SV", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function QRModal({
     isOpen,
     onClose,
@@ -41,15 +53,15 @@ export default function QRModal({
 
                 <div className="space-y-2 text-sm text-foreground/70">
                     <p>
-                        📅 {event.date}
+                        📅 {formatDateTime(event.eventDate)}
                     </p>
 
                     <p>
-                        📍 {event.location}
+                        📍 {event.seatType}
                     </p>
 
                     <p>
-                        🎟️ {event.tickets} entrada(s)
+                        🎟️ {event.seatNumber} entrada(s)
                     </p>
                 </div>
 

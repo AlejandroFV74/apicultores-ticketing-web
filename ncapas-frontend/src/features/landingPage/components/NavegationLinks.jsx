@@ -11,7 +11,7 @@ const publicLinks = [
     path: "/categories",
   },
   {
-    label: "Historial de compras",
+    label: "Mis tickets",
     path: "/mytickets",
   },
   {
