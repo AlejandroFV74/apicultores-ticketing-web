@@ -14,7 +14,6 @@ import {
   setReservationFlowState,
 } from "./purchaseFlowState";
 
-
 function formatMMSS(totalSeconds) {
   const safe = Math.max(0, Math.floor(totalSeconds));
   const mm = Math.floor(safe / 60);
@@ -29,7 +28,7 @@ function useCountdown(expiresAt) {
   useEffect(() => {
     if (!expiresAt) return;
 
-    const endMs = Number(expiresAt);
+    const endMs = new Date(expiresAt).getTime();
     if (!Number.isFinite(endMs)) return;
 
     const tick = () => {
@@ -54,14 +53,18 @@ function useCountdown(expiresAt) {
 }
 
 export default function PaymentSelectionPage() {
+  const [reservation, setReservation] = useState(() =>
+    getReservationFlowState(),
+  );
   const navigate = useNavigate();
   const params = useParams();
   const eventIdFromRoute = params?.eventId;
-
-  const [flowState, setFlowState] = useState(() => getReservationFlowState());
-
-  const reservation = flowState?.reservation;
   const reservationId = reservation?.id;
+
+  //const [flowState, setFlowState] = useState(() => getReservationFlowState());
+
+  //const reservation = flowState?.reservation;
+  const reservation_id = reservation?.id;
   const expiresAt = reservation?.expiresAt ?? reservation?.expires_at;
   const eventId = reservation?.eventId;
 
@@ -70,7 +73,6 @@ export default function PaymentSelectionPage() {
   const [errorMsg, setErrorMsg] = useState(null);
 
   const { remainingSeconds, expired } = useCountdown(expiresAt);
-
 
   useEffect(() => {
     const effectiveEventId = eventId ?? eventIdFromRoute;
@@ -92,13 +94,16 @@ export default function PaymentSelectionPage() {
     load();
   }, [eventId, eventIdFromRoute, navigate]);
 
-
   useEffect(() => {
     if (!expired) return;
 
     async function cancelDueToExpiry() {
       try {
-        if (reservationId) await deleteReservation(reservationId);
+        if (!reservationId) {
+          clearReservationFlowState();
+          navigate("/", { replace: true });
+          return;
+        }
       } catch {
         // ignore
       } finally {
@@ -109,15 +114,14 @@ export default function PaymentSelectionPage() {
     }
 
     cancelDueToExpiry();
-  }, [expired, reservationId, navigate]);
-
+  }, [expired, reservation_id, navigate]);
 
   const selectedSeatsDetailed = useMemo(() => {
-    return (reservation?.seats ?? []).map((s) => ({
-      ...s,
+    return (reservation?.seats ?? []).map((seat) => ({
+      ...seat,
       // normalize naming differences
-      seatNumber: s.seatNumber ?? s.number,
-      seatType: s.seatType ?? s.tier,
+      seatNumber: seat.seatNumber,
+      seatType: seat.seatType,
     }));
   }, [reservation]);
 
@@ -128,14 +132,18 @@ export default function PaymentSelectionPage() {
     );
   }, [selectedSeatsDetailed]);
 
-
   const handleBasicPayment = async () => {
-    if (!reservationId) return;
+    console.log("Basic payment");
+    if (!reservation_id) return;
 
     setErrorMsg(null);
     setLoading(true);
     try {
-      const payment = await createPayment(reservationId);
+      console.log("Creating payment");
+      const payment = await createPayment(reservationId, {
+        paymentMethod: "BASIC",
+      });
+      console.log(payment);
 
       const paymentId =
         payment?.paymentId ?? payment?.id ?? payment?.payment?.id;
@@ -143,24 +151,27 @@ export default function PaymentSelectionPage() {
       if (!paymentId) throw new Error("Missing paymentId");
 
       await confirmCheckout(paymentId);
-
-      navigate("/mytickets");
+     
     } catch (e) {
+      if (e?.message?.includes("ya fue completada")) {
+        clearReservationFlowState();
+        navigate("/mytickets");
+        return;
+      }
+
       setErrorMsg(e?.message || "Payment failed");
-    } finally {
-      setLoading(false);
     }
   };
 
-
   const handleStripeCheckout = async () => {
-    if (!reservationId) return;
+    if (!reservation_id) return;
 
     setErrorMsg(null);
     setLoading(true);
     try {
-      const payment = await createPayment(reservationId);
-
+      const payment = await createPayment(reservationId, {
+        paymentMethod: "STRIPE",
+      });
       const paymentId =
         payment?.paymentId ?? payment?.id ?? payment?.payment?.id;
 
@@ -174,7 +185,6 @@ export default function PaymentSelectionPage() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <Header />
@@ -182,9 +192,10 @@ export default function PaymentSelectionPage() {
       <div className="max-w-4xl mx-auto pt-16">
         <div className="mb-10">
           <h1 className="text-4xl font-black">Pago</h1>
-          <p className="text-foreground/60 mt-2">Selecciona un método de pago.</p>
+          <p className="text-foreground/60 mt-2">
+            Selecciona un método de pago.
+          </p>
         </div>
-
 
         {errorMsg ? (
           <div className="mb-4 p-4 glass-card text-yellow-300 font-semibold">
@@ -192,11 +203,13 @@ export default function PaymentSelectionPage() {
           </div>
         ) : null}
 
-      <div className="glass-card p-6 mb-6">
+        <div className="glass-card p-6 mb-6">
           <div className="flex flex-col gap-2 mb-6">
             <div>
               <span className="text-foreground/60">Evento:</span>{" "}
-              <span className="font-bold">{event?.title ?? event?.name ?? ""}</span>
+              <span className="font-bold">
+                {event?.title ?? event?.name ?? ""}
+              </span>
             </div>
 
             <div>
@@ -215,7 +228,6 @@ export default function PaymentSelectionPage() {
           <div className="text-foreground/60">
             Asientos seleccionados: {selectedSeatsDetailed.length}
           </div>
-
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -259,4 +271,3 @@ export default function PaymentSelectionPage() {
     </div>
   );
 }
-

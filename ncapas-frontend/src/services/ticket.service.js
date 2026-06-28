@@ -3,6 +3,7 @@ import { apiClient } from "../api/apiClient";
 
 
 export async function getMyTickets(ownerId){
+    
     const response =
     await apiClient(`/tickets/mytickets/${ownerId}`);
     const data =  await response.json();

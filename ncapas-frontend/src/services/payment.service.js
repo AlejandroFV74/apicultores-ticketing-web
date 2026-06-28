@@ -1,10 +1,10 @@
 import { apiClient } from "../api/apiClient";
 
-export async function createPayment(reservationId, payload = {}) {
+export async function createPayment(reservation_id, payload = {}) {
   const response = await apiClient(`/payments`, {
     method: "POST",
     body: JSON.stringify({
-      reservationId,
+      reservation_id,
       ...payload,
     }),
   });
@@ -45,4 +45,3 @@ export function redirectToStripeCheckout(paymentId) {
 
   window.location.assign(url);
 }
-
