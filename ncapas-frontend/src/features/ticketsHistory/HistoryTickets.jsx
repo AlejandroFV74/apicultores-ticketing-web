@@ -1,0 +1,80 @@
+import EventInfoCard from "./components/EventInfoCard";
+import EmptyEventsState from "./components/EmptyEventsState";
+import { useEffect, useState } from "react";
+import { getUser } from "../../services/auth.service";
+import { getMyHistoryTickets } from "../../services/ticket.service";
+import Header from "../landingPage/components/Header";
+import {useNavigate } from "react-router-dom";
+
+export default function HistoryTicketsPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [myEvents, setMyEvents] = useState([])
+  const [loading, setLoading] = useState(false);
+  const user = getUser();
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if(!user || !user.userId){
+      navigate("/login");
+    }
+  },[user,navigate])
+
+  useEffect(() => {
+    if (!user || !user.userId) return;
+
+    const loadTickets = async () => {
+      try {
+        const tickets = await getMyHistoryTickets(user.userId);
+        setMyEvents(tickets);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTickets();
+  }, [user?.userId]);
+
+  return (
+    
+    <div className="min-h-screen bg-background py-12 px-6">
+      <Header
+              mobileMenuOpen={mobileMenuOpen}
+              setMobileMenuOpen={setMobileMenuOpen}
+      />
+      <div className="max-w-6xl mx-auto pt-16">
+        <div className="mb-10">
+          <h1 className="text-4xl font-black">
+            Mis Entradas
+          </h1>
+
+          <p className="text-foreground/60 mt-2">
+            Consulta todos los eventos para los
+            que has comprado entradas.
+          </p>
+        </div>
+
+        {
+          loading ? (
+            <div className="flex justify-center items-center">
+              <div className="loading loading-spinner"></div>
+            </div>
+          ) : null
+        }
+        {myEvents.length === 0 ? (
+          <EmptyEventsState />
+        ) : (
+          <div className="space-y-6">
+            {myEvents.map((event) => (
+              <EventInfoCard
+                event={event}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
