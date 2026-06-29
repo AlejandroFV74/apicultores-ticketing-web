@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { isOrganizer } from "../../../services/auth.service";
+import { isOrganizer, isAdmin } from "../../../services/auth.service";
 
 const publicLinks = [
   {
@@ -7,38 +7,43 @@ const publicLinks = [
     path: "/",
   },
   {
-    label: "Categorías",
-    path: "/categories",
-  },
-  {
     label: "Mis tickets",
     path: "/mytickets",
-  },
-  {
-    label: "Soporte",
-    path: "/support",
   },
 ];
 
 const organizerLinks = [
   {
-    label: "Crear eventos",
-    path: "/organizer/events/create",
-  },
-  {
-    label: "Mostrar eventos",
+    label: "Mis eventos",
     path: "/organizer/events",
   },
   {
-    label: "Editar eventos",
-    path: "/organizer/events/edit",
+    label: "Crear evento",
+    path: "/organizer/events/create",
+  },
+];
+
+const adminLinks = [
+  {
+    label: "Admin Eventos",
+    path: "/admin/events",
+  },
+  {
+    label: "Admin Tickets",
+    path: "/admin/tickets",
   },
 ];
 
 export default function NavigationLinks({ mobile = false }) {
-  const links = isOrganizer()
-    ? [...publicLinks, ...organizerLinks]
-    : publicLinks;
+  const admin = isAdmin();
+  const organizer = isOrganizer();
+
+  let links = publicLinks;
+  if (admin) {
+    links = [...links, ...adminLinks];
+  } else if (organizer) {
+    links = [...links, ...organizerLinks];
+  }
 
   return (
     <>

@@ -67,6 +67,32 @@ export function isAuthenticated() {
     return !!localStorage.getItem("token");
 }
 
+export function isAdmin() {
+    const user = getUser();
+    if (!user) return false;
+
+    const roles = [
+        user.role,
+        user.userRole,
+        user.roleName,
+        ...(Array.isArray(user.roles) ? user.roles : []),
+    ]
+        .filter(Boolean)
+        .map((role) =>
+            typeof role === "string"
+                ? role
+                : role.name || role.authority || role.role
+        )
+        .filter(Boolean)
+        .map((role) => role.toUpperCase());
+
+    return roles.some(
+        (role) =>
+            role.includes("ADMIN") ||
+            role.includes("ADMINISTRATOR")
+    );
+}
+
 export function isOrganizer() {
     const user = getUser();
     if (!user) return false;
@@ -89,9 +115,19 @@ export function isOrganizer() {
     return roles.some(
         (role) =>
             role.includes("ORGANIZER") ||
-            role.includes("ORGANIZADOR") ||
-            role.includes("ADMIN")
+            role.includes("ORGANIZADOR")
     );
+}
+
+export function isBuyer() {
+    const user = getUser();
+    if (!user) return false;
+
+    // Buyer is neither admin nor organizer
+    if (isAdmin()) return false;
+    if (isOrganizer()) return false;
+
+    return true;
 }
 
 export function logout() {
@@ -99,3 +135,11 @@ export function logout() {
     localStorage.removeItem("user");
 }
 
+export async function getOrganizers() {
+    const response = await apiClient("/users/role/ORGANIZER");
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.message || "Error al obtener organizadores");
+    }
+    return data.data || data;
+}

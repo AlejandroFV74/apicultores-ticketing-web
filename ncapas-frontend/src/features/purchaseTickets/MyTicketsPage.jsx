@@ -2,7 +2,7 @@ import PurchasedEventCard from "./components/PurchasedEventCard";
 import EmptyEventsState from "./components/EmptyEventsState";
 import QRModal from "./components/QRModal";
 import TransferTicketModal from "./components/TransferTicketModal";
-import RefundTicketModal from "./components/RefundTicketModal";
+import RefundRequestModal from "./components/RefundRequestModal";
 import { useEffect, useState } from "react";
 import { getUser } from "../../services/auth.service";
 import { getMyTickets } from "../../services/ticket.service";
@@ -16,9 +16,9 @@ export default function MyTicketsPage() {
   const [showQR, setShowQR] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedRefundTicket, setSelectedRefundTicket] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const user = getUser();
   const navigate = useNavigate();
 
@@ -42,17 +42,6 @@ export default function MyTicketsPage() {
     setSelectedTicket(null);
   };
 
-  const handleTransferSuccess = async () => {
-    if (!user || !user.userId) return;
-
-    try {
-      const tickets = await getMyTickets(user.userId);
-      setMyEvents(tickets);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleRefund = (ticket) => {
     setSelectedRefundTicket(ticket);
     setShowRefundModal(true);
@@ -63,7 +52,11 @@ export default function MyTicketsPage() {
     setSelectedRefundTicket(null);
   };
 
-  const handleRefundSuccess = async () => {
+  const handleRefundSuccess = () => {
+    // Optionally refresh list
+  };
+
+  const handleTransferSuccess = async () => {
     if (!user || !user.userId) return;
 
     try {
@@ -149,7 +142,7 @@ export default function MyTicketsPage() {
           ticket={selectedTicket}
           onSuccess={handleTransferSuccess}
         />
-        <RefundTicketModal
+        <RefundRequestModal
           isOpen={showRefundModal}
           onClose={handleCloseRefund}
           ticket={selectedRefundTicket}
