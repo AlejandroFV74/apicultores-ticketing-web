@@ -11,48 +11,65 @@ import { Register } from "../../../services/auth.service";
 import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
-
   const navigate = useNavigate();
-
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    Register(form);
+    setError(null);
+
+    if (form.password !== form.confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await Register(form);
+      navigate("/login");
+    } catch (err) {
+      setError(err.message || "Error al registrarse");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginClick = () => {
     navigate("/login");
   };
 
   return (
     <AuthLayout>
       <AuthCard>
-        <AuthLogo
-          subtitle="Crea tu cuenta para comenzar"
-        />
+        <AuthLogo subtitle="Crea tu cuenta para comenzar" />
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="space-y-5">
           <AuthInput
-            label="Usuario"
+            label="Nombre completo"
             name="fullName"
             value={form.fullName}
             onChange={handleChange}
-            placeholder="Jon doe"
+            placeholder="Jon Doe"
           />
 
           <AuthInput
@@ -80,8 +97,10 @@ export default function RegisterPage() {
             placeholder="********"
           />
 
-          <AuthButton>
-            Crear Cuenta
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
+          <AuthButton type="submit" disabled={loading}>
+            {loading ? "Creando cuenta..." : "Crear Cuenta"}
           </AuthButton>
         </form>
 
@@ -89,6 +108,7 @@ export default function RegisterPage() {
           <AuthFooterLink
             text="¿Ya tienes cuenta?"
             linkText="Iniciar sesión"
+            onClick={handleLoginClick}
           />
         </div>
       </AuthCard>

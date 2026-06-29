@@ -18,40 +18,43 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    Login(form).then((res) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await Login(form);
       if (res) {
         navigate(redirectTo, { replace: true });
       }
-    });
+    } catch (err) {
+      setError(err.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegisterClick = () => {
-    // navigate("/register");
+    navigate("/register");
   };
 
   return (
     <AuthLayout>
       <AuthCard>
-        <AuthLogo
-          subtitle="Inicia sesión para acceder a tus eventos"
-        />
+        <AuthLogo subtitle="Inicia sesión para acceder a tus eventos" />
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="space-y-5">
           <AuthInput
             label="Correo Electrónico"
             name="email"
@@ -68,8 +71,10 @@ export default function LoginPage() {
             placeholder="********"
           />
 
-          <AuthButton type="submit">
-            Iniciar Sesión
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
+          <AuthButton type="submit" disabled={loading}>
+            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </AuthButton>
         </form>
 
