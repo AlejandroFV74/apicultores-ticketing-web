@@ -14,6 +14,7 @@ export default function PurchasedEventCard({
   event,
   onViewQR,
   onTransfer,
+  onRefund,
 }) {
   return (
     <div className="glass-card overflow-hidden">
@@ -60,7 +61,7 @@ export default function PurchasedEventCard({
               onClick={() => onViewQR(event)}
               className="
                 flex-1
-                px-6
+                px-4
                 py-3
                 rounded-lg
                 font-semibold
@@ -80,7 +81,7 @@ export default function PurchasedEventCard({
               onClick={() => onTransfer(event)}
               className="
                 flex-1
-                px-6
+                px-4
                 py-3
                 rounded-lg
                 font-semibold
@@ -91,6 +92,24 @@ export default function PurchasedEventCard({
               "
             >
               Transferir
+            </button>
+
+            <button
+              onClick={() => onRefund(event)}
+              className="
+                flex-1
+                px-4
+                py-3
+                rounded-lg
+                font-semibold
+                border
+                border-red-500/40
+                text-red-400
+                hover:bg-red-500/10
+                transition-colors
+              "
+            >
+              Reembolso
             </button>
           </div>
         </div>

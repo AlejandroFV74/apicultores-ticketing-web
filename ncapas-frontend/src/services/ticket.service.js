@@ -17,7 +17,6 @@ export async function getMyTickets(ownerId){
     return data.data;
 };
 
-
 export async function getMyHistoryTickets(ownerId){
     const response =
     await apiClient(`/tickets/history/${ownerId}`);
@@ -45,6 +44,24 @@ export async function transferTicket({ ticketId, toUserEmail }) {
 
     if (!response.ok) {
         throw new Error(result.message || "Ticket transfer failed");
+    }
+
+    return result;
+}
+
+export async function refundTicket({ ticketId, reason }) {
+    const response = await apiClient(`/tickets/cancel-refund`, {
+        method: "POST",
+        body: JSON.stringify({
+            ticketId,
+            reason: reason || "User requested refund"
+        })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "Ticket refund failed");
     }
 
     return result;
