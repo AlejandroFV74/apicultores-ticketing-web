@@ -1,34 +1,36 @@
-import { useEffect, useState } from "react";
-import { getEvents } from "../services/event.service";
+import { useState, useEffect } from 'react';
+import { getEvents, getMyEvents, deleteEvent } from '../services/event.service';
+import { isAdmin } from '../services/auth.service';
 
-export function useEvents() {
+export function useEvents(adminMode = false) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const data = await getEvents();
-
-        setEvents(data);
-      } catch (err) {
-        if(err.status === 404){
-          setEvents([]);
-        }else{
-          setError(err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEvents();
-  }, []);
-
-  return {
-    events,
-    loading,
-    error,
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const data = adminMode ? await getEvents() : await getMyEvents();
+      setEvents(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const removeEvent = async (eventId) => {
+    try {
+      await deleteEvent(eventId);
+      setEvents(prev => prev.filter(e => (e.eventId ?? e.id) !== eventId));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, [adminMode]);
+
+  return { events, loading, error, removeEvent, reload: loadEvents };
 }
