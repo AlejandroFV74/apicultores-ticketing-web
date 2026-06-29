@@ -14,6 +14,8 @@ export default function LandingPage() {
     error,
   } = useEvents();
 
+  const activeEvents = events?.filter((event) => event.status === "ACTIVE") || [];
+
 
   return (
     <div className="min-h-screen bg-background text-foreground dark">
@@ -30,7 +32,7 @@ export default function LandingPage() {
         ) : error ? (
           <p>Error cargando eventos</p>
         ) : (
-          <EventsSection events={events} />
+          <EventsSection events={activeEvents} />
         )}
       </div>
       <Footer />

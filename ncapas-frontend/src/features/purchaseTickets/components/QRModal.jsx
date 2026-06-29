@@ -1,17 +1,37 @@
 import Modal from "./Modal";
 import { QRCodeSVG } from 'qrcode.react';
+import { useState } from "react";
+
+function formatDateTime(date) {
+  if (!date) return "Por confirmar";
+
+  return new Date(date).toLocaleString("es-SV", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function QRModal({
     isOpen,
     onClose,
     event,
 }) {
+    
+    const [showText,setShowText] = useState(false);
     if (!event) return null;
+
+    const handleClose = () => {
+        setShowText(false);
+        onClose();
+    }
 
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={handleClose}
         >
             <div className="text-center">
                 <h2 className="text-2xl font-bold mb-2">
@@ -29,27 +49,38 @@ export default function QRModal({
                         overflow: "hidden",
                     }}
                 >
-                    <QRCodeSVG
-                        value={event.qrValue}
+                    {showText ? (
+                            <div className="max-w-xs break-all text-center text-white font-mono text-sm">
+                                <span>{event.qrCode}</span> 
+                            </div>
+                    ) : (
+                        <QRCodeSVG
+                        value={event.qrCode}
                         size={200}
                         bgColor="#ffffff"
                         fgColor="#000000"
                         level="H"
                     />
+                    
+                    )}
                 </div>
 
-
                 <div className="space-y-2 text-sm text-foreground/70">
+                    <button
+                    onClick = {() => setShowText(!showText)}
+                     className="mt-4 px-5 py-2 rounded-lg bg-gradient-to-r from-neon-blue to-neon-purple text-white font-medium hover:opacity-90 transition-all">
+                        {showText ? "Mostrar QR" : "Mostrar texto"}
+                    </button>
                     <p>
-                        📅 {event.date}
+                        📅 {formatDateTime(event.eventDate)}
                     </p>
 
                     <p>
-                        📍 {event.location}
+                        📍 {event.seatType}
                     </p>
 
                     <p>
-                        🎟️ {event.tickets} entrada(s)
+                        🎟️ {event.seatNumber} entrada(s)
                     </p>
                 </div>
 

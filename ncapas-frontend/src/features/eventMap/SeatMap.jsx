@@ -12,6 +12,7 @@ import {
   clearReservationFlowState,
   setReservationFlowState,
 } from "../purchaseTickets/purchaseFlowState";
+import NoSeatsAvailable from "./components/NoSeatsAvailable";
 
 export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
   const params = useParams();
@@ -182,6 +183,12 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
     }
   };
 
+  const availableSeats = useMemo(() => {
+  return seats.filter((seat) => seat.status === "available");
+  }, [seats]);
+
+  const noSeatsAvailable = seats.length > 0 && availableSeats.length === 0;
+
   return (
     <div className="grid lg:grid-cols-[320px_1fr] gap-8">
       <div className="hidden lg:block w-80 flex-shrink-0">
@@ -246,6 +253,7 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
       </div>
 
       <div className="space-y-12">
+        <NoSeatsAvailable></NoSeatsAvailable>
         <Stage />
 
         <div>

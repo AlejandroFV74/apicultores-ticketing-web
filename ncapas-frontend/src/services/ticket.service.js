@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import { apiClient } from "../api/apiClient";
 
 
@@ -31,3 +30,17 @@ export async function getMyHistoryTickets(ownerId){
 
     return data.data;
 };
+
+export async function validateTicket(qrCode){
+    const response = await apiClient(`/tickets/validation/${encodeURIComponent(qrCode)}`,{
+        method: "POST"
+    });
+    const data = await response.json();
+    console.log(data.data)
+
+    if(!response.ok){
+        throw new Error(data.message || "Validate tickets failed");
+    }
+
+    return data.data;
+}

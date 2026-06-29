@@ -7,16 +7,16 @@ const publicLinks = [
     path: "/",
   },
   {
-    label: "Categorías",
-    path: "/categories",
+    label: "Historial de tickets",
+    path: "/history",
   },
   {
-    label: "Historial de compras",
+    label: "Mis tickets",
     path: "/mytickets",
   },
   {
-    label: "Soporte",
-    path: "/support",
+    label: "Notificaciones",
+    path: "/notifications",
   },
 ];
 
@@ -32,6 +32,10 @@ const organizerLinks = [
   {
     label: "Editar eventos",
     path: "/organizer/events/edit",
+  },
+  {
+    label: "Escanear QR",
+    path: "/organizer/tickets/scan",
   },
 ];
 
