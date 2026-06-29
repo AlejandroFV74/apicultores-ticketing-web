@@ -12,6 +12,7 @@ import {
   clearReservationFlowState,
   setReservationFlowState,
 } from "../purchaseTickets/purchaseFlowState";
+import NoSeatsAvailable from "./components/NoSeatsAvailable";
 
 export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
   const params = useParams();
@@ -20,20 +21,30 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
   const SEATS_PER_ROW = 28;
   const [initialSeats, setInitialSeats] = useState([]);
 
+  const statusMap = {
+      AVAILABLE: "available",
+      RESERVED: "reserved",
+      SOLD: "booked",
+    };
+
   const normalizeBackendSeat = (seat, index) => {
-    const status = seat.status === "AVAILABLE" ? "available" : "booked";
+    
+
+    const status = statusMap[seat.status] ?? "booked";
+    //const status = seat.status === "AVAILABLE" ? "available" : "booked";
 
     return {
       id: seat.id,
-      row: String.fromCharCode(65 + Math.floor(index / SEATS_PER_ROW)),
-      number: (index % SEATS_PER_ROW) + 1,
+      row:
+        seat.row ??
+        seat.seatRow ??
+        String.fromCharCode(65 + Math.floor(index / SEATS_PER_ROW)),
+      seatNumber: seat.seatNumber ?? seat.number ?? (index % SEATS_PER_ROW) + 1,
       tier: seat.seatType === "VIP" ? "vip" : "general",
       price: Number(seat.price),
-      status,
+      status: statusMap[seat.status] ?? "booked",
     };
   };
-
-
 
   const { seats, selectedSeats, handleSeatClick } = useSeatSelection(
     initialSeats,
@@ -123,8 +134,7 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
 
   const canContinue =
     selectedCount > 0 &&
-    (maxSeatsPerUser == null ||
-      Number.isFinite(Number(maxSeatsPerUser))
+    (maxSeatsPerUser == null || Number.isFinite(Number(maxSeatsPerUser))
       ? selectedCount <= Number(maxSeatsPerUser)
       : true);
 
@@ -158,10 +168,9 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
         reservation?.reservationId ??
         reservation?.id ??
         reservation?.reservation?.id;
-      const expiresAt =
-        reservation?.expiresAt ?? reservation?.expires_at;
+      const expiresAt = reservation?.expiresAt ?? reservation?.expires_at;
 
-        console.log(reservation);
+      console.log(reservation);
 
       setReservationFlowState(reservation);
 
@@ -173,6 +182,12 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
       setSubmitting(false);
     }
   };
+
+  const availableSeats = useMemo(() => {
+  return seats.filter((seat) => seat.status === "available");
+  }, [seats]);
+
+  const noSeatsAvailable = seats.length > 0 && availableSeats.length === 0;
 
   return (
     <div className="grid lg:grid-cols-[320px_1fr] gap-8">
@@ -238,6 +253,7 @@ export function SeatMap({ eventId, seatingConfig, onSelectionChange }) {
       </div>
 
       <div className="space-y-12">
+        <NoSeatsAvailable></NoSeatsAvailable>
         <Stage />
 
         <div>

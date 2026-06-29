@@ -32,6 +32,17 @@ const adminLinks = [
     label: "Admin Tickets",
     path: "/admin/tickets",
   },
+  {
+    label: "Escanear QR",
+    path: "/organizer/tickets/scan",
+  },
+];
+
+const adminLinks = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+  },
 ];
 
 export default function NavigationLinks({ mobile = false }) {

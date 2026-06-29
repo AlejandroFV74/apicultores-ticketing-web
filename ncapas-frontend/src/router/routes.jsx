@@ -54,8 +54,16 @@ export const router = createBrowserRouter([
     element: <MyTicketsPage />,
   },
   {
+    path: "/tickets/scan",
+    element: <TicketScannerPage />,
+  },
+  {
     path: "/organizer",
     element: <OrganizerEventsPage />,
+  },
+  {
+    path: "/organizer/tickets/scan",
+    element: <TicketScannerPage />,
   },
   {
     path: "/organizer/events",
