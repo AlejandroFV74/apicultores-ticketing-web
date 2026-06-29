@@ -11,6 +11,7 @@ import CreateEventPage from "../features/eventOrganizer/CreateEventPage";
 import EditEventPage from "../features/eventOrganizer/EditEventPage";
 import ReservationConfirmationPage from "../features/purchaseTickets/ReservationConfirmationPage";
 import PaymentSelectionPage from "../features/purchaseTickets/PaymentSelectionPage";
+import DashboardPage from "../features/admindashboard/DashboardPage"; 
 
 
 export const router = createBrowserRouter([
@@ -74,4 +75,8 @@ export const router = createBrowserRouter([
     path: "/organizer/events/:eventId/edit",
     element: <EditEventPage />,
   },
+  {
+    path: "/dashboard",
+    element: <DashboardPage />,  
+  }
 ]);
