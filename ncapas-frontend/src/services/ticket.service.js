@@ -31,3 +31,21 @@ export async function getMyHistoryTickets(ownerId){
 
     return data.data;
 };
+
+export async function transferTicket({ ticketId, toUserEmail }) {
+    const response = await apiClient(`/tickets/transfer`, {
+        method: "POST",
+        body: JSON.stringify({
+            ticketId,
+            toUserEmail
+        })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "Ticket transfer failed");
+    }
+
+    return result;
+}

@@ -1,4 +1,3 @@
-
 function formatDateTime(date) {
   if (!date) return "Por confirmar";
 
@@ -14,8 +13,8 @@ function formatDateTime(date) {
 export default function PurchasedEventCard({
   event,
   onViewQR,
-}) {  
-
+  onTransfer,
+}) {
   return (
     <div className="glass-card overflow-hidden">
       <div className="md:flex">
@@ -56,25 +55,44 @@ export default function PurchasedEventCard({
             </div>
           </div>
 
-          <button
-            onClick={() => onViewQR(event)}
-            className="
-              mt-6
-              px-6
-              py-3
-              rounded-lg
-              font-semibold
-              bg-gradient-to-r
-              from-neon-blue
-              to-neon-purple
-              text-white
-              transition-all
-              hover:shadow-lg
-              hover:shadow-neon-blue/50
-            "
-          >
-            Ver QR
-          </button>
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => onViewQR(event)}
+              className="
+                flex-1
+                px-6
+                py-3
+                rounded-lg
+                font-semibold
+                bg-gradient-to-r
+                from-neon-blue
+                to-neon-purple
+                text-white
+                transition-all
+                hover:shadow-lg
+                hover:shadow-neon-blue/50
+              "
+            >
+              Ver QR
+            </button>
+
+            <button
+              onClick={() => onTransfer(event)}
+              className="
+                flex-1
+                px-6
+                py-3
+                rounded-lg
+                font-semibold
+                border
+                border-border
+                hover:bg-white/10
+                transition-colors
+              "
+            >
+              Transferir
+            </button>
+          </div>
         </div>
       </div>
     </div>
