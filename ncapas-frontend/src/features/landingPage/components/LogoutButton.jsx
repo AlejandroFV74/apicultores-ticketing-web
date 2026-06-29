@@ -1,12 +1,11 @@
-import { useNavigate } from "react-router-dom";
 import { logout } from "../../../services/auth.service";
 
 export default function LogoutButton({ mobile = false }) {
-  const navigate = useNavigate();
 
   const handleLogoutClick = () => {
     logout();
-    navigate("/", { replace: true });
+    // Navigate to home and reload to ensure immediate UI update
+    window.location.href = "/";
   };
 
   return (

@@ -80,22 +80,6 @@ export default function PurchaseSummary({
         </div>
       ) : null}
 
-      <button
-        disabled={!totalSeats}
-        className="
-          w-full
-          py-3
-          rounded-lg
-          bg-gradient-to-r
-          from-neon-blue
-          to-neon-purple
-          text-white
-          font-semibold
-          disabled:opacity-50
-        "
-      >
-        Comprar
-      </button>
     </div>
   );
 }
