@@ -99,3 +99,65 @@ export function logout() {
     localStorage.removeItem("user");
 }
 
+export function isAdmin() {
+    const user = getUser();
+    if (!user) return false;
+
+    const roles = [
+        user.role,
+        user.userRole,
+        user.roleName,
+        ...(Array.isArray(user.roles) ? user.roles : []),
+    ]
+        .filter(Boolean)
+        .map((role) =>
+            typeof role === "string"
+                ? role
+                : role.name || role.authority || role.role
+        )
+        .filter(Boolean)
+        .map((role) => role.toUpperCase());
+
+    return roles.some((role) => role.includes("ADMIN"));
+}
+
+export function updateUser(userData) {
+    const currentUser = getUser();
+    if (!currentUser) {
+        localStorage.setItem("user", JSON.stringify(userData));
+        return;
+    }
+
+    const updatedUser = {
+        ...currentUser,
+        ...userData,
+    };
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+}
+
+export function getUserRole() {
+    const user = getUser();
+    return user?.role || user?.userRole || user?.roleName || null;
+}
+
+export function hasRole(roleNames) {
+    const user = getUser();
+    if (!user) return false;
+
+    const roles = [
+        user.role,
+        user.userRole,
+        user.roleName,
+        ...(Array.isArray(user.roles) ? user.roles : []),
+    ]
+        .filter(Boolean)
+        .map((r) => (typeof r === "string" ? r : r.name || r.authority || r.role))
+        .filter(Boolean)
+        .map((r) => r.toUpperCase());
+
+    const rolesToCheck = Array.isArray(roleNames) ? roleNames : [roleNames];
+    const normalizedRolesToCheck = rolesToCheck.map((r) => r.toUpperCase());
+
+    return roles.some((role) => normalizedRolesToCheck.includes(role));
+}

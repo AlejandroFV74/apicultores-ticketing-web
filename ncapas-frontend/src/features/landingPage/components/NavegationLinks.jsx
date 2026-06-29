@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { isOrganizer } from "../../../services/auth.service";
+import { isOrganizer, isAdmin, isAuthenticated } from "../../../services/auth.service";
 
 const publicLinks = [
   {
@@ -35,10 +35,33 @@ const organizerLinks = [
   },
 ];
 
+const adminLinks = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+  },
+];
+
 export default function NavigationLinks({ mobile = false }) {
-  const links = isOrganizer()
-    ? [...publicLinks, ...organizerLinks]
-    : publicLinks;
+  const isOrg = isOrganizer();
+  const isAdminUser = isAdmin();
+  const isAuth = isAuthenticated();
+
+  let links = [];
+
+  if (isAdminUser) {
+    links = [...links, ...adminLinks];
+  }
+
+  links = [...links, ...publicLinks];
+
+  if (isOrg) {
+    links = [...links, ...organizerLinks];
+  }
+
+  if (!isAuth) {
+    links = links.filter(link => link.path !== "/mytickets");
+  }
 
   return (
     <>
