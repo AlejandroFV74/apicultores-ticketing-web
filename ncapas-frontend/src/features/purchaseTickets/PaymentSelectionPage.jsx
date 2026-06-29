@@ -151,7 +151,10 @@ export default function PaymentSelectionPage() {
       if (!paymentId) throw new Error("Missing paymentId");
 
       await confirmCheckout(paymentId);
-     
+
+      setLoading(false);
+      clearReservationFlowState();
+      navigate("/mytickets");
     } catch (e) {
       if (e?.message?.includes("ya fue completada")) {
         clearReservationFlowState();

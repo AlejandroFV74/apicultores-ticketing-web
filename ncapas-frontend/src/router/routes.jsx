@@ -13,7 +13,7 @@ import ReservationConfirmationPage from "../features/purchaseTickets/Reservation
 import PaymentSelectionPage from "../features/purchaseTickets/PaymentSelectionPage";
 import TicketScannerPage from "../features/ticketScanner/TicketScannerPage";
 import HistoryTicketsPage from "../features/ticketsHistory/HistoryTickets";
-
+import DashboardPage from "../features/admindashboard/DashboardPage"; 
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +86,9 @@ export const router = createBrowserRouter([
   },
   {
     path: "/history",
-    element: <HistoryTicketsPage />,
+    element: <HistoryTicketsPage />
+  },
+    path: "/dashboard",
+    element: <DashboardPage />,  
   }
 ]);
