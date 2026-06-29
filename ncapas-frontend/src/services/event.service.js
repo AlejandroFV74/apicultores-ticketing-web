@@ -15,23 +15,47 @@ export async function getEvents(){
     return data?.data ?? data;
 }
 
+export async function getAllOrganizerEvents() {
+  const response = await apiClient(`${BASE_ENDPOINT}/my-events`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Error al obtener tus eventos");
+  return data.data || data;
+}
 
 export async function searchEvents(title) {
   const response = await apiClient(`${BASE_ENDPOINT}/search?title=${encodeURIComponent(title)}`);
-  if (!response.ok) throw new Error("Error al buscar eventos");
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Error al buscar eventos");
+  return data.data || data;
 }
 
 export async function getEventById(id) {
   const response = await apiClient(`${BASE_ENDPOINT}/${id}`);
-  if (!response.ok) throw new Error("Evento no encontrado");
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Evento no encontrado");
+  return data.data || data;
 }
 
 export async function getMyEvents() {
-  const response = await apiClient(`${BASE_ENDPOINT}/my-events`);
-  if (!response.ok) throw new Error("Error al obtener tus eventos");
-  return response.json();
+  // Try /events/my-events first, then /event/my-events
+  let response = await apiClient(`${BASE_ENDPOINT}/my-events`);
+  let data = await response.json();
+  
+  // If not found, try singular endpoint
+  if (!response.ok) {
+    response = await apiClient(`/event/my-events`);
+    data = await response.json();
+  }
+  
+  if (!response.ok) throw new Error(data.message || "Error al obtener tus eventos");
+  return data.data || data;
+}
+
+export async function getManageEvents() {
+  const response = await apiClient(`${BASE_ENDPOINT}/manage`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Error al obtener eventos para gestionar");
+  return data.data || data;
 }
 
 export async function createEvent(event) {
@@ -57,5 +81,14 @@ export async function deleteEvent(id) {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Error al eliminar el evento");
-  return true;
+  return response.json();
+}
+
+export async function publishEvent(id) {
+  const response = await apiClient(`${BASE_ENDPOINT}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: "ACTIVE" }),
+  });
+  if (!response.ok) throw new Error("Error al publicar el evento");
+  return response.json();
 }

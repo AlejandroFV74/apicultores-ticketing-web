@@ -6,6 +6,7 @@ import {
   confirmCheckout,
   createPayment,
   redirectToStripeCheckout,
+  createStripeSession,
 } from "../../services/payment.service";
 import { deleteReservation } from "../../services/reservation.service";
 import {
@@ -172,6 +173,7 @@ export default function PaymentSelectionPage() {
     setErrorMsg(null);
     setLoading(true);
     try {
+      // Create payment with STRIPE method
       const payment = await createPayment(reservationId, {
         paymentMethod: "STRIPE",
       });
@@ -180,7 +182,15 @@ export default function PaymentSelectionPage() {
 
       if (!paymentId) throw new Error("Missing paymentId");
 
-      redirectToStripeCheckout(paymentId);
+      // Create Stripe checkout session (buyer only)
+      const session = await createStripeSession(paymentId);
+      
+      // Get checkout URL from response
+      const checkoutUrl = session?.data?.checkoutUrl;
+      if (!checkoutUrl) throw new Error("Missing checkout URL");
+
+      // Redirect to the Stripe URL returned in result.data.checkoutUrl
+      redirectToStripeCheckout(checkoutUrl);
     } catch (e) {
       setErrorMsg(e?.message || "Stripe checkout failed");
     } finally {

@@ -9,11 +9,12 @@ import EventDetailPage from "../features/eventDetail/EventDetailPage";
 import OrganizerEventsPage from "../features/eventOrganizer/OrganizerEventsPage";
 import CreateEventPage from "../features/eventOrganizer/CreateEventPage";
 import EditEventPage from "../features/eventOrganizer/EditEventPage";
+import OrganizerSeatConfigPage from "../features/eventOrganizer/OrganizerSeatConfigPage";
+import OrganizerReportsPage from "../features/eventOrganizer/OrganizerReportsPage";
 import ReservationConfirmationPage from "../features/purchaseTickets/ReservationConfirmationPage";
 import PaymentSelectionPage from "../features/purchaseTickets/PaymentSelectionPage";
-import TicketScannerPage from "../features/ticketScanner/TicketScannerPage";
-import HistoryTicketsPage from "../features/ticketsHistory/HistoryTickets";
-import DashboardPage from "../features/admindashboard/DashboardPage"; 
+import AdminEventsPage from "../features/admin/AdminEventsPage";
+import AdminTicketsPage from "../features/admin/AdminTicketsPage";
 
 export const router = createBrowserRouter([
   {
@@ -84,11 +85,26 @@ export const router = createBrowserRouter([
     path: "/organizer/events/:eventId/edit",
     element: <EditEventPage />,
   },
+  // Organizer routes
   {
-    path: "/history",
-    element: <HistoryTicketsPage />
+    path: "/organizer/events/:eventId/seats",
+    element: <OrganizerSeatConfigPage />,
   },
-    path: "/dashboard",
-    element: <DashboardPage />,  
-  }
+  {
+    path: "/organizer/events/:eventId/reports",
+    element: <OrganizerReportsPage />,
+  },
+  // Admin routes
+  {
+    path: "/admin",
+    element: <AdminEventsPage />,
+  },
+  {
+    path: "/admin/events",
+    element: <AdminEventsPage />,
+  },
+  {
+    path: "/admin/tickets",
+    element: <AdminTicketsPage />,
+  },
 ]);

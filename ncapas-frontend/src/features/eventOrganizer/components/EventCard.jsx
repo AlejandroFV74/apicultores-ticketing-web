@@ -37,12 +37,16 @@ const formatDate = (value) => {
   });
 };
 
+import { useNavigate } from "react-router-dom";
+
 export default function EventCard({
   event,
   showActions = false,
   onEdit,
   onDelete,
 }) {
+  const navigate = useNavigate();
+  const eventId = event.eventId || event.id;
   const status = statusStyles[event.status] || statusStyles.DRAFT;
 
   return (
@@ -82,21 +86,39 @@ export default function EventCard({
       </div>
 
       {showActions ? (
-        <div className="flex gap-3 border-t border-neon-blue/20 bg-muted/20 p-4">
-          <button
-            type="button"
-            onClick={() => onEdit?.(event)}
-            className="flex-1 rounded-lg border border-neon-blue/40 bg-neon-blue/10 px-3 py-2 text-sm font-semibold text-neon-blue transition-colors hover:bg-neon-blue/20"
-          >
-            Modificar
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete?.(event)}
-            className="flex-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
-          >
-            Eliminar
-          </button>
+        <div className="flex flex-col gap-2 border-t border-neon-blue/20 bg-muted/20 p-4">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit?.(event)}
+              className="flex-1 rounded-lg border border-neon-blue/40 bg-neon-blue/10 px-3 py-2 text-sm font-semibold text-neon-blue transition-colors hover:bg-neon-blue/20"
+            >
+              Modificar
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete?.(event)}
+              className="flex-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
+            >
+              Eliminar
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/organizer/events/${eventId}/seats`)}
+              className="flex-1 rounded-lg border border-neon-purple/40 bg-neon-purple/10 px-3 py-2 text-sm font-semibold text-neon-purple transition-colors hover:bg-neon-purple/20"
+            >
+              Asientos
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/organizer/events/${eventId}/reports`)}
+              className="flex-1 rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-2 text-sm font-semibold text-green-400 transition-colors hover:bg-green-500/20"
+            >
+              Reportes
+            </button>
+          </div>
         </div>
       ) : null}
     </article>

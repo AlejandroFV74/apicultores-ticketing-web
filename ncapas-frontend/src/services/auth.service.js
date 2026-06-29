@@ -67,6 +67,32 @@ export function isAuthenticated() {
     return !!localStorage.getItem("token");
 }
 
+export function isAdmin() {
+    const user = getUser();
+    if (!user) return false;
+
+    const roles = [
+        user.role,
+        user.userRole,
+        user.roleName,
+        ...(Array.isArray(user.roles) ? user.roles : []),
+    ]
+        .filter(Boolean)
+        .map((role) =>
+            typeof role === "string"
+                ? role
+                : role.name || role.authority || role.role
+        )
+        .filter(Boolean)
+        .map((role) => role.toUpperCase());
+
+    return roles.some(
+        (role) =>
+            role.includes("ADMIN") ||
+            role.includes("ADMINISTRATOR")
+    );
+}
+
 export function isOrganizer() {
     const user = getUser();
     if (!user) return false;
@@ -89,9 +115,19 @@ export function isOrganizer() {
     return roles.some(
         (role) =>
             role.includes("ORGANIZER") ||
-            role.includes("ORGANIZADOR") ||
-            role.includes("ADMIN")
+            role.includes("ORGANIZADOR")
     );
+}
+
+export function isBuyer() {
+    const user = getUser();
+    if (!user) return false;
+
+    // Buyer is neither admin nor organizer
+    if (isAdmin()) return false;
+    if (isOrganizer()) return false;
+
+    return true;
 }
 
 export function logout() {
@@ -99,65 +135,11 @@ export function logout() {
     localStorage.removeItem("user");
 }
 
-export function isAdmin() {
-    const user = getUser();
-    if (!user) return false;
-
-    const roles = [
-        user.role,
-        user.userRole,
-        user.roleName,
-        ...(Array.isArray(user.roles) ? user.roles : []),
-    ]
-        .filter(Boolean)
-        .map((role) =>
-            typeof role === "string"
-                ? role
-                : role.name || role.authority || role.role
-        )
-        .filter(Boolean)
-        .map((role) => role.toUpperCase());
-
-    return roles.some((role) => role.includes("ADMIN"));
-}
-
-export function updateUser(userData) {
-    const currentUser = getUser();
-    if (!currentUser) {
-        localStorage.setItem("user", JSON.stringify(userData));
-        return;
+export async function getOrganizers() {
+    const response = await apiClient("/users/role/ORGANIZER");
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.message || "Error al obtener organizadores");
     }
-
-    const updatedUser = {
-        ...currentUser,
-        ...userData,
-    };
-
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-}
-
-export function getUserRole() {
-    const user = getUser();
-    return user?.role || user?.userRole || user?.roleName || null;
-}
-
-export function hasRole(roleNames) {
-    const user = getUser();
-    if (!user) return false;
-
-    const roles = [
-        user.role,
-        user.userRole,
-        user.roleName,
-        ...(Array.isArray(user.roles) ? user.roles : []),
-    ]
-        .filter(Boolean)
-        .map((r) => (typeof r === "string" ? r : r.name || r.authority || r.role))
-        .filter(Boolean)
-        .map((r) => r.toUpperCase());
-
-    const rolesToCheck = Array.isArray(roleNames) ? roleNames : [roleNames];
-    const normalizedRolesToCheck = rolesToCheck.map((r) => r.toUpperCase());
-
-    return roles.some((role) => normalizedRolesToCheck.includes(role));
+    return data.data || data;
 }

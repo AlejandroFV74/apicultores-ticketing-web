@@ -32,16 +32,23 @@ export async function confirmCheckout(paymentId) {
   return data?.data ?? data;
 }
 
-export function redirectToStripeCheckout(paymentId) {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
+// Create Stripe checkout session (buyer only)
+export async function createStripeSession(paymentId) {
+  const response = await apiClient(`/payments/checkout/${paymentId}/session`, {
+    method: "POST",
+  });
 
-  // We must not use fetch() here: backend returns an HTTP redirect.
-  // Authorization header cannot be set with a browser navigation,
-  // so backend should rely on cookie/session or public redirect handling.
-  // If your backend requires the Authorization header, adjust accordingly.
-  // For now we just navigate.
-  const url = `${API_URL}/payments/checkout/${paymentId}`;
+  const data = await response.json();
 
-  window.location.assign(url);
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to create Stripe session");
+  }
+
+  return data;
+}
+
+// Redirect to Stripe checkout URL
+export function redirectToStripeCheckout(checkoutUrl) {
+  // Only redirect to the Stripe URL returned in result.data.checkoutUrl
+  window.location.assign(checkoutUrl);
 }
