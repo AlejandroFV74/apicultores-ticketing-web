@@ -7,8 +7,8 @@ const publicLinks = [
     path: "/",
   },
   {
-    label: "Categorías",
-    path: "/categories",
+    label: "Historial de tickets",
+    path: "/history",
   },
   {
     label: "Mis tickets",
