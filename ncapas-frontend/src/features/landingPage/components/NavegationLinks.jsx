@@ -15,8 +15,8 @@ const publicLinks = [
     path: "/mytickets",
   },
   {
-    label: "Soporte",
-    path: "/support",
+    label: "Notificaciones",
+    path: "/notifications",
   },
 ];
 
@@ -32,6 +32,10 @@ const organizerLinks = [
   {
     label: "Editar eventos",
     path: "/organizer/events/edit",
+  },
+  {
+    label: "Escanear QR",
+    path: "/organizer/tickets/scan",
   },
 ];
 

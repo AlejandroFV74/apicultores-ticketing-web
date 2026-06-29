@@ -11,6 +11,7 @@ import CreateEventPage from "../features/eventOrganizer/CreateEventPage";
 import EditEventPage from "../features/eventOrganizer/EditEventPage";
 import ReservationConfirmationPage from "../features/purchaseTickets/ReservationConfirmationPage";
 import PaymentSelectionPage from "../features/purchaseTickets/PaymentSelectionPage";
+import TicketScannerPage from "../features/ticketScanner/TicketScannerPage";
 
 
 export const router = createBrowserRouter([
@@ -51,8 +52,16 @@ export const router = createBrowserRouter([
     element: <MyTicketsPage />,
   },
   {
+    path: "/tickets/scan",
+    element: <TicketScannerPage />,
+  },
+  {
     path: "/organizer",
     element: <OrganizerEventsPage />,
+  },
+  {
+    path: "/organizer/tickets/scan",
+    element: <TicketScannerPage />,
   },
   {
     path: "/organizer/events",
